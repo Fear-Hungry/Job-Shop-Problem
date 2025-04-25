@@ -1,11 +1,5 @@
 # Job-Shop-Problem
 
-Perfeito. Vou buscar artigos dos últimos 10 anos que apresentaram os melhores resultados para o problema Job Shop, analisando detalhadamente os algoritmos utilizados — especialmente quando envolvem mais de uma metaheurística — e comparando o desempenho em termos de tempo, qualidade da solução e robustez.
-
-Assim que a análise estiver pronta, volto com um resumo completo e estruturado.
-
-# Algoritmos de Estado-da-Arte para Job Shop Scheduling (2015–2025)
-
 ## Introdução 
 O **Job Shop Scheduling Problem (JSSP)** é um problema clássico de otimização combinatória onde um conjunto de jobs (tarefas) deve ser agendado em máquinas, respeitando sequências específicas de operações. O objetivo típico é minimizar o *makespan* (tempo total para concluir todos os jobs), embora outros critérios possam ser considerados. Trata-se de um problema **NP-difícil**, o que torna impraticável usar métodos exatos (como programação inteira ou programação por restrições) para instâncias de porte industrial ([
 		A Review of Metaheuristic Algorithms for Job Shop Scheduling
