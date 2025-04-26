@@ -14,3 +14,7 @@ venv/
 
 # Ignore IDE and editor-related files
 .vscode/
+.devcontainer/
+.github/
+
+/workspaces/Job-Shop-Problem/Dockerfile

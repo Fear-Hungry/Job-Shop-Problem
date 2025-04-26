@@ -144,17 +144,32 @@ RUN set -eux; \
 
 CMD ["python3"]
 
-RUN set -eux; \
-    apk add --no-cache curl; \
-    curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable; \
-    export PATH="$PATH:/root/.cargo/bin"; \
-    echo 'export PATH="$PATH:/root/.cargo/bin"' >> /etc/profile
-
-ENV PATH="/root/.cargo/bin:${PATH}"
-
+# Instala dependências de sistema, git, build e Rust (sem duplicidade)
 RUN set -eux; \
     apk add --no-cache \
-        ca-certificates \
-        tzdata \
         git \
-;
+        build-base \
+        llvm15 \
+        llvm15-dev \
+        llvm15-libs \
+        llvm15-static \
+        py3-pip \
+        curl \
+        musl-dev \
+        libffi-dev \
+        libc-dev \
+        gcc \
+        g++ \
+        linux-headers; \
+    curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable; \
+    echo 'export PATH="$PATH:/root/.cargo/bin"' >> /etc/profile; \
+    ln -s /usr/lib/llvm15/bin/llvm-config /usr/bin/llvm-config
+
+ENV PATH="/root/.cargo/bin:${PATH}"
+ENV LLVM_CONFIG=/usr/bin/llvm-config
+
+# Instala dependências Python
+COPY requirements.txt ./
+RUN pip install --upgrade pip && \
+    pip install llvmlite && \
+    pip install -r requirements.txt

@@ -15,7 +15,40 @@ class Solver:
         self.schedule = []
 
     def solve(self):
-        return self.schedule
+        """
+        Resolve o problema de Job Shop usando o NSGA-II e retorna o melhor cronograma encontrado.
+        """
+        from nsga2.NSGA2Perm import NSGA2Perm
+        from nsga2.jobshop_eval import decode_permutation, multi_objective_evaluation
+        from nsga2.Individual import Individual
+        import numpy as np
+        import random
+
+        num_ops = sum(len(job) for job in self.jobs)
+        pop_size = 100  # Tamanho sugerido no roteiro
+        n_gen = 400     # Gerações sugeridas no roteiro
+
+        # Cada operação é identificada por um índice único de 0 a num_ops-1
+        op_ids = list(range(num_ops))
+
+        # Função de avaliação para o NSGA-II
+        def problem(X):
+            return multi_objective_evaluation(X, self.jobs, self.num_jobs, self.num_machines)
+
+        # Inicializar o NSGA-II para problemas de permutação
+        nsga2 = NSGA2Perm(pop_size, n_gen, problem, None, None, op_ids)
+        nsga2.IndividualClass = Individual
+        nsga2.initialize_population()
+        nsga2.evaluate_population()
+        final_pop = nsga2.run(verbose=True)  # Ativando verbose para ver progresso
+
+        # Seleciona o indivíduo com menor makespan (primeiro objetivo)
+        best = min(final_pop, key=lambda ind: ind.f[0])
+        best_perm = np.array(best.x).astype(int)
+        schedule = decode_permutation(best_perm, self.jobs, self.num_jobs, self.num_machines)
+        print(f"\nMelhores objetivos encontrados: Makespan={best.f[0]}, Tardiness={best.f[1]:.2f}, Load_SD={best.f[2]:.2f}")
+        self.schedule = schedule
+        return schedule
 
     def get_makespan(self, schedule):
         """
