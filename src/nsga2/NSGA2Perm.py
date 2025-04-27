@@ -3,26 +3,16 @@ import numpy as np
 from copy import deepcopy
 from .NSGA2 import NSGA2
 from .Individual import Individual
+from .operators import crossover as crossover_ops
+from .operators import mutation as mutation_ops
+from .operators import local_search as local_search_ops
 
 class NSGA2Perm(NSGA2):
     """
     Implementação especializada do NSGA-II para problemas de permutação.
     """
-    def __init__(self, pop_size, n_gen, problem, xl, xu, op_ids, n_jobs=None, n_machines=None):
-        """
-        Inicializa o NSGA-II para problemas de permutação.
-
-        Args:
-            pop_size: Tamanho da população
-            n_gen: Número de gerações
-            problem: Função de avaliação que aceita uma matriz de permutações
-            xl: Limite inferior (não usado na versão de permutação)
-            xu: Limite superior (não usado na versão de permutação)
-            op_ids: Lista de IDs de operações que serão permutados
-            n_jobs: Número de jobs (para decodificar representações job-based)
-            n_machines: Número de máquinas (para busca local)
-        """
-        super().__init__(pop_size, n_gen, problem, xl, xu)
+    def __init__(self, pop_size, n_gen, problem, xl, xu, op_ids, n_jobs=None, n_machines=None, initial_population=None):
+        super().__init__(pop_size, n_gen, problem, xl, xu, initial_population=initial_population)
         self.op_ids = op_ids
         self.IndividualClass = Individual  # Define a classe de indivíduo a ser usada
         self.n_jobs = n_jobs
@@ -43,270 +33,40 @@ class NSGA2Perm(NSGA2):
         # Contador para atualização de pesos AOS
         self.generations_since_update = 0
 
+        # constante de exploração para UCB
+        self.aos_alpha = 0.1  # exploration constant for UCB
+        # Contador de uso dos operadores para AOS (UCB)
+        self.op_counts = {
+            'crossover': {op_name: 0 for op_name in self.op_weights['crossover']},
+            'mutation': {op_name: 0 for op_name in self.op_weights['mutation']}
+        }
+
         # Parâmetros de busca local
         self.local_search_prob = 0.1  # Probabilidade de aplicar busca local em um indivíduo
         self.max_local_iterations = 30  # Número máximo de iterações da busca local
 
     def initialize_population(self):
-        """
-        Inicializa a população com permutações aleatórias de forma vetorizada.
-        """
-        self.population = []
-        # Cria múltiplas permutações de uma vez
-        perm_base = np.array(self.op_ids)
-
-        # Para cada indivíduo na população
-        for _ in range(self.pop_size):
-            # Cria uma cópia da permutação base e randomiza
-            perm = perm_base.copy()
-            np.random.shuffle(perm)
-            ind = self.IndividualClass(perm)
-            self.population.append(ind)
-
-    @staticmethod
-    def _ox_crossover_vectorized(p1, p2, n_offspring=2):
-        """
-        Implementação correta do Order Crossover (OX) para permutações.
-        Preenche circularmente as posições restantes.
-
-        Args:
-            p1, p2: Arrays NumPy representando as permutações dos pais
-            n_offspring: Número de filhos a gerar (tipicamente 2)
-
-        Returns:
-            Array de permutações dos filhos
-        """
-        size = len(p1)
-        offspring = np.zeros((n_offspring, size), dtype=p1.dtype)
-        a = np.random.randint(0, size)
-        b = np.random.randint(0, size)
-        if a > b:
-            a, b = b, a
-        # Filho 1
-        offspring[0] = -1
-        offspring[0, a:b] = p1[a:b]
-        fill = [item for item in p2 if item not in p1[a:b]]
-        pos = b
-        for item in fill:
-            if pos >= size:
-                pos = 0
-            if offspring[0, pos] == -1:
-                offspring[0, pos] = item
-                pos += 1
-        # Filho 2
-        offspring[1] = -1
-        offspring[1, a:b] = p2[a:b]
-        fill = [item for item in p1 if item not in p2[a:b]]
-        pos = b
-        for item in fill:
-            if pos >= size:
-                pos = 0
-            if offspring[1, pos] == -1:
-                offspring[1, pos] = item
-                pos += 1
-        return offspring
-
-    @staticmethod
-    def _ppx_crossover(p1, p2, n_offspring=2):
-        """
-        Precedence Preserving Crossover (PPX) para permutações.
-        Preserva a precedência copiando genes na ordem em que são "extraídos".
-
-        Args:
-            p1, p2: Arrays NumPy representando as permutações dos pais
-            n_offspring: Número de filhos a gerar
-
-        Returns:
-            Array de permutações dos filhos
-        """
-        size = len(p1)
-        offspring = np.zeros((n_offspring, size), dtype=p1.dtype)
-
-        # Cria uma máscara aleatória para selecionar de qual pai copiar
-        mask = np.random.randint(0, 2, size=size)
-
-        # Para os dois filhos
-        for k in range(n_offspring):
-            # Inverte a máscara para o segundo filho
-            if k == 1:
-                mask = 1 - mask
-
-            # Posição atual nos filhos
-            pos = 0
-            # Elementos já copiados
-            used = set()
-
-            # Cópias dos pais para manipular
-            p1_copy = p1.copy()
-            p2_copy = p2.copy()
-
-            # Para cada posição do filho
-            for i in range(size):
-                # Seleciona o pai conforme a máscara
-                parent = p1_copy if mask[i] == 0 else p2_copy
-
-                # Encontra o primeiro elemento do pai que ainda não foi usado
-                for j in range(size):
-                    if parent[j] not in used:
-                        offspring[k, pos] = parent[j]
-                        used.add(parent[j])
-                        pos += 1
-                        break
-
-        return offspring
-
-    @staticmethod
-    def _ippx_crossover(p1, p2, n_offspring=2, n_jobs=None):
-        """
-        Improved Precedence Preserving Crossover (IPPX) para permutações.
-        Estende o PPX com um passo adicional que reordena blocos redundantes.
-
-        Args:
-            p1, p2: Arrays NumPy representando as permutações dos pais
-            n_offspring: Número de filhos a gerar
-            n_jobs: Número de jobs na instância (para identificar operações do mesmo job)
-
-        Returns:
-            Array de permutações dos filhos
-        """
-        # Primeiro aplicamos PPX padrão
-        offspring = NSGA2Perm._ppx_crossover(p1, p2, n_offspring)
-
-        # Se não temos informação sobre número de jobs, retornamos o PPX normal
-        if n_jobs is None:
-            return offspring
-
-        # Para cada filho, aplicamos o segundo estágio do IPPX
-        for k in range(n_offspring):
-            child = offspring[k]
-            # Identificamos os blocos de job (operações do mesmo job)
-            job_blocks = {}
-
-            # Assumindo que op_id começa com identificador de job
-            # Por exemplo: op_id = job_id * 100 + op_seq
-            for i, op in enumerate(child):
-                job_id = op // 100  # Adequar com a sua codificação de operações
-                if job_id not in job_blocks:
-                    job_blocks[job_id] = []
-                job_blocks[job_id].append((i, op))
-
-            # Reordena internamente cada bloco para minimizar makespan
-            # (Simplificação: aqui apenas embaralha para aumentar diversidade)
-            for job_id, block in job_blocks.items():
-                if len(block) > 1:
-                    indices = [b[0] for b in block]
-                    random.shuffle(indices)
-                    for idx, (_, op) in zip(indices, block):
-                        offspring[k, idx] = op
-
-        return offspring
-
-    @staticmethod
-    def _extended_ppx_crossover(p1, p2, n_offspring=2):
-        """
-        Extended Precedence Preserving Crossover para permutações.
-        Estende o PPX com pontos de corte adaptativos para mais diversidade.
-
-        Args:
-            p1, p2: Arrays NumPy representando as permutações dos pais
-            n_offspring: Número de filhos a gerar
-
-        Returns:
-            Array de permutações dos filhos
-        """
-        size = len(p1)
-        offspring = np.zeros((n_offspring, size), dtype=p1.dtype)
-
-        # Seleciona número de pontos de corte (entre 2-5 normalmente)
-        n_cuts = random.randint(2, min(5, size//10 + 2))
-
-        # Gera os pontos de corte
-        cut_points = sorted(random.sample(range(1, size), n_cuts))
-        cut_points = [0] + cut_points + [size]
-
-        # Para cada filho
-        for k in range(n_offspring):
-            # Seleciona ordem dos pais (inverte para o segundo filho)
-            p_order = [p1, p2] if k == 0 else [p2, p1]
-            pos = 0
-            used = set()
-
-            # Para cada segmento entre pontos de corte
-            for i in range(len(cut_points) - 1):
-                # Alterna entre pais
-                parent = p_order[i % 2]
-                segment_size = cut_points[i+1] - cut_points[i]
-
-                # Encontra elementos não utilizados do pai atual
-                segment = []
-                for item in parent:
-                    if item not in used and len(segment) < segment_size:
-                        segment.append(item)
-                        used.add(item)
-
-                # Se não há elementos suficientes do pai atual, complete com o outro pai
-                other_parent = p_order[(i+1) % 2]
-                for item in other_parent:
-                    if item not in used and len(segment) < segment_size:
-                        segment.append(item)
-                        used.add(item)
-
-                # Copia o segmento para o filho
-                offspring[k, pos:pos+segment_size] = segment
-                pos += segment_size
-
-        return offspring
-
-    @staticmethod
-    def _pmx_crossover(p1, p2, n_offspring=2):
-        """
-        Partially Mapped Crossover (PMX) para permutações.
-
-        Args:
-            p1, p2: Arrays NumPy representando as permutações dos pais
-            n_offspring: Número de filhos a gerar
-
-        Returns:
-            Array de permutações dos filhos
-        """
-        size = len(p1)
-        offspring = np.zeros((n_offspring, size), dtype=p1.dtype)
-
-        # Pontos de corte
-        a = np.random.randint(0, size)
-        b = np.random.randint(0, size)
-        if a > b:
-            a, b = b, a
-
-        # Para os dois filhos
-        for k in range(n_offspring):
-            # Seleciona os pais (inverte para o segundo filho)
-            parent1 = p1 if k == 0 else p2
-            parent2 = p2 if k == 0 else p1
-
-            # Inicializa o filho como cópia do segundo pai
-            child = parent2.copy()
-
-            # Copia o segmento do primeiro pai
-            child[a:b] = parent1[a:b]
-
-            # Constrói o mapeamento
-            mapping = {}
-            for i in range(a, b):
-                if parent1[i] != parent2[i]:
-                    mapping[parent2[i]] = parent1[i]
-
-            # Aplica o mapeamento para resolver conflitos
-            for i in range(size):
-                if i < a or i >= b:
-                    item = child[i]
-                    while item in mapping:
-                        item = mapping[item]
-                    child[i] = item
-
-            offspring[k] = child
-
-        return offspring
+        if self.initial_population is not None:
+            self.population = [self.IndividualClass(x) for x in self.initial_population]
+            n_missing = self.pop_size - len(self.population)
+            if n_missing > 0:
+                perm_base = np.array(self.op_ids)
+                for _ in range(n_missing):
+                    perm = perm_base.copy()
+                    np.random.shuffle(perm)
+                    self.population.append(self.IndividualClass(perm))
+            self.population = self.population[:self.pop_size]
+        else:
+            self.population = []
+            perm_base = np.array(self.op_ids)
+            for i in range(self.pop_size):
+                perm = perm_base.copy()
+                np.random.shuffle(perm)
+                # Checagem de permutação válida
+                if len(set(perm)) != len(perm):
+                    print(f"[ERRO] Permutação inválida na inicialização (ind {i}): {perm}")
+                ind = self.IndividualClass(perm)
+                self.population.append(ind)
 
     def sbx(self, parent1, parent2, eta=15):
         """
@@ -324,378 +84,136 @@ class NSGA2Perm(NSGA2):
         operators = list(self.op_weights['crossover'].keys())
         weights = list(self.op_weights['crossover'].values())
         op = random.choices(operators, weights=weights, k=1)[0]
+        # incrementa contador de uso do operador
+        self.op_counts['crossover'][op] += 1
 
         x1, x2 = np.array(parent1.x), np.array(parent2.x)
 
         # Aplica o operador selecionado
         if op == 'OX':
-            children = self._ox_crossover_vectorized(x1, x2, 2)
+            children = crossover_ops.ox_crossover_vectorized(x1, x2, 2)
         elif op == 'PPX':
-            children = self._ppx_crossover(x1, x2, 2)
+            children = crossover_ops.ppx_crossover(x1, x2, 2)
         elif op == 'IPPX':
-            children = self._ippx_crossover(x1, x2, 2, self.n_jobs)
+            children = crossover_ops.ippx_crossover(x1, x2, 2, self.n_jobs)
         elif op == 'ExtPPX':
-            children = self._extended_ppx_crossover(x1, x2, 2)
+            children = crossover_ops.extended_ppx_crossover(x1, x2, 2)
         elif op == 'PMX':
-            children = self._pmx_crossover(x1, x2, 2)
+            children = crossover_ops.pmx_crossover(x1, x2, 2)
         else:
             # Fallback para OX
-            children = self._ox_crossover_vectorized(x1, x2, 2)
+            children = crossover_ops.ox_crossover_vectorized(x1, x2, 2)
 
         # Registra o operador usado para atualizar estatísticas depois
         child1, child2 = self.IndividualClass(children[0]), self.IndividualClass(children[1])
         child1.crossover_op = op
         child2.crossover_op = op
-
+        # Checagem de permutação válida após crossover
+        if len(set(child1.x)) != len(child1.x):
+            print(f"[ERRO] Permutação inválida após crossover (child1): {child1.x}")
+        if len(set(child2.x)) != len(child2.x):
+            print(f"[ERRO] Permutação inválida após crossover (child2): {child2.x}")
         return child1, child2
 
-    @staticmethod
-    def _swap_mutation_vectorized(x, n_offspring=1, p_m=None):
+    def poly_mutation(
+        self,
+        ind,
+        eta: int = 20,
+        p_m: float | None = None,
+        xl=None, xu=None,
+        n_offspring: int = 1,
+        p_m_min: float = 1e-3,):
         """
-        Implementação vetorizada da mutação Swap para permutações.
+        Mutação para indivíduos permutação-baseados.
 
-        Args:
-            x: Array NumPy representando a permutação
-            n_offspring: Número de cópias a mutar
-            p_m: Probabilidade de mutação
-
-        Returns:
-            Array de permutações mutadas
+        Parameters
+        ----------
+        ind : object
+            Deve possuir atributo `x` (sequência 1-D) e aceitar reatribuição.
+        eta : int
+            Mantido por compatibilidade (não usado).
+        p_m : float, optional
+            Probab. de mutar cada gene. Se None => 1/len(ind).
+        xl, xu
+            Mantido por compatibilidade (não usado).
+        n_offspring : int
+            Número de filhos a devolver pelos operadores de mutação.
+        p_m_min : float
+            Limite mínimo para p_m caso o cromossomo seja longo.
         """
-        size = len(x)
-        if size < 2:
-            return np.array([x] * n_offspring)
 
+        x = np.asarray(ind.x)            # não copia ainda
+        L = len(x)
         if p_m is None:
-            p_m = 1.0 / size
+            p_m = max(1.0 / L, p_m_min)
 
-        # Crie cópias do indivíduo original
-        offspring = np.array([x.copy() for _ in range(n_offspring)])
+        # ==== Adaptive-Operator-Selection ====
+        ops_dict = self.op_weights['mutation']
+        operators, weights = zip(*ops_dict.items())
+        if sum(weights) == 0:
+            weights = [1] * len(operators)
 
-        # Para cada cópia
-        for i in range(n_offspring):
-            # Decida se aplica mutação
-            if np.random.random() < p_m:
-                # Selecione dois índices aleatórios
-                idx1, idx2 = np.random.choice(size, 2, replace=False)
-                # Troque os valores
-                offspring[i][idx1], offspring[i][idx2] = offspring[i][idx2], offspring[i][idx1]
-
-        return offspring
-
-    @staticmethod
-    def _insertion_mutation(x, n_offspring=1, p_m=None):
-        """
-        Mutação por Inserção para permutações.
-        Remove um elemento e o insere em outra posição.
-
-        Args:
-            x: Array NumPy representando a permutação
-            n_offspring: Número de cópias a mutar
-            p_m: Probabilidade de mutação
-
-        Returns:
-            Array de permutações mutadas
-        """
-        size = len(x)
-        if size < 2:
-            return np.array([x] * n_offspring)
-
-        if p_m is None:
-            p_m = 1.0 / size
-
-        # Crie cópias do indivíduo original
-        offspring = np.array([x.copy() for _ in range(n_offspring)])
-
-        # Para cada cópia
-        for i in range(n_offspring):
-            # Decida se aplica mutação
-            if np.random.random() < p_m:
-                # Selecione dois índices aleatórios
-                idx1, idx2 = np.random.choice(size, 2, replace=False)
-
-                # Garante que idx1 < idx2 para simplificar
-                if idx1 > idx2:
-                    idx1, idx2 = idx2, idx1
-
-                # Remove o elemento da posição idx1 e o insere antes da posição idx2
-                value = offspring[i][idx1]
-                # Desloca os elementos entre idx1 e idx2-1
-                offspring[i][idx1:idx2] = offspring[i][idx1+1:idx2+1]
-                # Insere o valor na posição idx2-1
-                offspring[i][idx2-1] = value
-
-        return offspring
-
-    @staticmethod
-    def _inversion_mutation(x, n_offspring=1, p_m=None):
-        """
-        Mutação por Inversão para permutações.
-        Inverte uma subsequência da permutação.
-
-        Args:
-            x: Array NumPy representando a permutação
-            n_offspring: Número de cópias a mutar
-            p_m: Probabilidade de mutação
-
-        Returns:
-            Array de permutações mutadas
-        """
-        size = len(x)
-        if size < 2:
-            return np.array([x] * n_offspring)
-
-        if p_m is None:
-            p_m = 1.0 / size
-
-        # Crie cópias do indivíduo original
-        offspring = np.array([x.copy() for _ in range(n_offspring)])
-
-        # Para cada cópia
-        for i in range(n_offspring):
-            # Decida se aplica mutação
-            if np.random.random() < p_m:
-                # Selecione dois índices aleatórios
-                idx1, idx2 = np.random.choice(size, 2, replace=False)
-
-                # Garante que idx1 < idx2
-                if idx1 > idx2:
-                    idx1, idx2 = idx2, idx1
-
-                # Inverte a subsequência
-                offspring[i][idx1:idx2+1] = np.flip(offspring[i][idx1:idx2+1])
-
-        return offspring
-
-    @staticmethod
-    def _two_opt_mutation(x, n_offspring=1, p_m=None, problem_eval=None):
-        """
-        Mutação 2-Opt para permutações, voltada para redução de makespan.
-        Remove dois arcos e reconecta de forma a potencialmente reduzir makespan.
-
-        Args:
-            x: Array NumPy representando a permutação
-            n_offspring: Número de cópias a mutar
-            p_m: Probabilidade de mutação
-            problem_eval: Função para avaliar a qualidade da solução (opcional)
-
-        Returns:
-            Array de permutações mutadas
-        """
-        size = len(x)
-        if size < 4:  # Precisa de ao menos 4 elementos para ter 2 arcos
-            return np.array([x] * n_offspring)
-
-        if p_m is None:
-            p_m = 1.0 / size
-
-        # Crie cópias do indivíduo original
-        offspring = np.array([x.copy() for _ in range(n_offspring)])
-
-        # Para cada cópia
-        for i in range(n_offspring):
-            # Decida se aplica mutação
-            if np.random.random() < p_m:
-                # Versão simples do 2-opt: seleciona duas posições e inverte a subsequência
-                idx1, idx2 = np.random.choice(size, 2, replace=False)
-
-                # Garante que idx1 < idx2
-                if idx1 > idx2:
-                    idx1, idx2 = idx2, idx1
-
-                # Cria uma cópia antes da mutação para comparar depois
-                original = offspring[i].copy()
-
-                # Inverte a subsequência (equivalente a reconectar os arcos)
-                offspring[i][idx1:idx2+1] = np.flip(offspring[i][idx1:idx2+1])
-
-                # Se temos uma função de avaliação, verificamos se houve melhoria
-                if problem_eval is not None:
-                    # Avalia a nova solução
-                    new_fitness = problem_eval(np.array([offspring[i]]))[0]
-                    # Avalia a solução original
-                    orig_fitness = problem_eval(np.array([original]))[0]
-
-                    # Se não houve melhoria, reverte a mutação
-                    if new_fitness[0] > orig_fitness[0]:  # Assumindo que o primeiro objetivo é makespan
-                        offspring[i] = original
-
-        return offspring
-
-    def poly_mutation(self, ind, eta=20, p_m=None, xl=None, xu=None):
-        """
-        Operador de mutação para permutações.
-        Seleciona um operador de mutação com base nos pesos adaptativos.
-
-        Args:
-            ind: Indivíduo a ser mutado
-            eta: Parâmetro de distribuição (não utilizado em mutações de permutação)
-            p_m: Probabilidade de mutação
-            xl, xu: Limites inferior e superior (não utilizados em mutações de permutação)
-        """
-        # Ajusta probabilidade de mutação com base na diversidade da população
-        if p_m is None:
-            p_m = 1.0 / len(ind.x)
-
-        # Seleciona o operador usando AOS
-        operators = list(self.op_weights['mutation'].keys())
-        weights = list(self.op_weights['mutation'].values())
         op = random.choices(operators, weights=weights, k=1)[0]
+        # incrementa contador de uso do operador
+        self.op_counts['mutation'][op] += 1
 
-        x = np.array(ind.x)
-
-        # Aplica o operador selecionado
+        # ==== Aplica operador escolhido ====
         if op == 'Swap':
-            mutated = self._swap_mutation_vectorized(x, 1, p_m)
+            offspring = mutation_ops.swap_mutation_vectorized(x, n_offspring, p_m)
         elif op == 'Insertion':
-            mutated = self._insertion_mutation(x, 1, p_m)
+            offspring = mutation_ops.insertion_mutation(x, n_offspring, p_m)
         elif op == 'Inversion':
-            mutated = self._inversion_mutation(x, 1, p_m)
+            offspring = mutation_ops.inversion_mutation(x, n_offspring, p_m)
         elif op == '2Opt':
-            mutated = self._two_opt_mutation(x, 1, p_m, self.problem)
-        else:
-            # Fallback para Swap
-            mutated = self._swap_mutation_vectorized(x, 1, p_m)
+            offspring = mutation_ops.two_opt_mutation(x, n_offspring, p_m, self.problem)
+        else:  # fallback
+            offspring = mutation_ops.swap_mutation_vectorized(x, n_offspring, p_m)
 
-        # Registra o operador usado para atualizar estatísticas depois
-        ind.x = mutated[0]
-        ind.mutation_op = op
+        # Assume que cada operador retorna ndarray shape (n_offspring, L)
+        ind.x = offspring[0].tolist()     # ou .copy() se quiser ndarray
+        ind.mutation_op = op             # para logging/AOS
 
-    def local_search_n7(self, ind, max_iter=None):
-        """
-        Busca local N7 (Nowicki-Smutnicki) para problemas JSSP.
-        Aplica movimentos sobre blocos críticos no caminho crítico.
+        return offspring
 
-        Args:
-            ind: Indivíduo a ser melhorado
-            max_iter: Número máximo de iterações (default: self.max_local_iterations)
-
-        Returns:
-            Indivíduo melhorado
-        """
-        if max_iter is None:
-            max_iter = self.max_local_iterations
-
-        # Se não temos informação sobre máquinas, não é possível aplicar N7
-        if self.n_machines is None or self.n_jobs is None:
-            return ind
-
-        # Cria cópia do indivíduo para não alterar o original durante a busca
-        current = deepcopy(ind)
-        current_x = np.array(current.x)
-
-        # Avaliação inicial
-        current_f = self.problem(np.array([current_x]))[0]
-        best_x = current_x.copy()
-        best_f = current_f.copy()
-
-        # Iterações da busca local
-        for _ in range(max_iter):
-            improved = False
-
-            # Identificar o caminho crítico (simulação simplificada)
-            # Aqui, assumimos que operações consecutivas na mesma máquina são candidatas a críticas
-            # Para uma implementação real de N7, é necessário identificar o caminho crítico completo
-
-            # Simulamos identificando pares de operações consecutivas em máquinas
-            machine_ops = {}
-            for i, op in enumerate(current_x):
-                machine = op % 100  # Adequar com a sua codificação de operações
-                if machine not in machine_ops:
-                    machine_ops[machine] = []
-                machine_ops[machine].append((i, op))
-
-            # Para cada par de operações consecutivas em uma máquina, tente trocar
-            for machine, ops in machine_ops.items():
-                if len(ops) < 2:
-                    continue
-
-                # Para cada par consecutivo de operações na máquina
-                for j in range(len(ops) - 1):
-                    idx1, op1 = ops[j]
-                    idx2, op2 = ops[j+1]
-
-                    # Tenta o movimento N7: troca operações consecutivas no caminho crítico
-                    new_x = current_x.copy()
-                    new_x[idx1], new_x[idx2] = new_x[idx2], new_x[idx1]
-
-                    # Avalia o movimento
-                    new_f = self.problem(np.array([new_x]))[0]
-
-                    # Se o movimento melhora o makespan (primeiro objetivo), aceita
-                    if new_f[0] < best_f[0]:
-                        best_x = new_x.copy()
-                        best_f = new_f.copy()
-                        improved = True
-                        break
-
-                if improved:
-                    break
-
-            # Se não houve melhoria nessa iteração, encerra a busca
-            if not improved:
-                break
-
-            # Atualiza solução atual
-            current_x = best_x.copy()
-            current_f = best_f.copy()
-
-        # Atualiza o indivíduo com a melhor solução encontrada
-        ind.x = best_x
-        ind.f = best_f
-
-        return ind
 
     def update_aos_weights(self):
         """
         Atualiza os pesos dos operadores de crossover e mutação
-        com base em seu desempenho recente (Adaptive Operator Selection).
+        com base em seu desempenho recente (Adaptive Operator Selection) usando UCB.
         """
         # Atualiza apenas a cada N gerações
         if self.generations_since_update < 10:  # A cada 10 gerações
             self.generations_since_update += 1
             return
 
+        # reinicia contador de gerações para próximo ciclo
         self.generations_since_update = 0
 
-        # Processando estatísticas de crossover
+        # Para cada tipo de operador, atualiza pesos usando UCB
         for op_type in ['crossover', 'mutation']:
             # Calcula a média de melhoria para cada operador
             improvements = {}
             for op_name, stats in self.op_stats[op_type].items():
-                if len(stats) > 0:
-                    # Média da melhoria percentual
-                    improvements[op_name] = np.mean(stats)
-                else:
-                    # Se não há dados, mantém peso atual
-                    improvements[op_name] = 0.0
-
-                # Limpa estatísticas para o próximo ciclo
+                improvements[op_name] = np.mean(stats) if stats else 0.0
+                # limpa estatísticas
                 self.op_stats[op_type][op_name] = []
 
-            # Se não há dados suficientes, mantém os pesos atuais
-            if all(imp == 0.0 for imp in improvements.values()):
-                continue
+            # total de aplicações de todos operadores
+            T = sum(self.op_counts[op_type].values())
 
-            # Normaliza as melhorias para somar 1.0
-            total_improvement = sum(max(0.0, imp) for imp in improvements.values())
-            if total_improvement > 0:
-                # Atualiza os pesos - UCB (Upper Confidence Bound) simplificado
-                # Mantém um mínimo de 0.05 para exploração
-                for op_name in improvements:
-                    # 80% baseado no desempenho, 20% para exploração
-                    if total_improvement > 0:
-                        new_weight = 0.8 * max(0.0, improvements[op_name]) / total_improvement + 0.05
-                    else:
-                        new_weight = 0.05
+            # calcula valor UCB para cada operador
+            ucb_values = {}
+            for op_name, rbar in improvements.items():
+                n = self.op_counts[op_type].get(op_name, 0)
+                # bônus de exploração: ln(T)/n ou ln(T+1) se nunca usado
+                bonus = self.aos_alpha * (np.log(T) / n if n > 0 else np.log(T + 1))
+                ucb_values[op_name] = max(0.0, rbar) + bonus
 
-                    # Atualiza gradualmente (suavização)
-                    self.op_weights[op_type][op_name] = 0.7 * self.op_weights[op_type][op_name] + 0.3 * new_weight
-
-                # Normaliza para somar 1.0
-                weight_sum = sum(self.op_weights[op_type].values())
-                for op_name in self.op_weights[op_type]:
-                    self.op_weights[op_type][op_name] /= weight_sum
+            # normaliza para somar 1.0
+            total_ucb = sum(ucb_values.values())
+            if total_ucb > 0:
+                for op_name, ucb in ucb_values.items():
+                    self.op_weights[op_type][op_name] = ucb / total_ucb
 
     def evaluate_offspring(self, offspring):
         """
@@ -795,7 +313,8 @@ class NSGA2Perm(NSGA2):
         # Aplica busca local nos melhores indivíduos
         for i in range(n_local_search):
             if i < len(sorted_kids):
-                sorted_kids[i] = self.local_search_n7(sorted_kids[i])
+                sorted_kids[i] = local_search_ops.local_search_n7(
+                    sorted_kids[i], self.problem, self.n_machines, self.n_jobs, self.max_local_iterations)
 
         # Atualiza pesos dos operadores
         self.update_aos_weights()

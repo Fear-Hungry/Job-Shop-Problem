@@ -4,7 +4,7 @@ from copy import deepcopy
 from .Individual import Individual
 
 class NSGA2:
-    def __init__(self, pop_size, n_gen, problem, xl, xu):
+    def __init__(self, pop_size, n_gen, problem, xl, xu, initial_population=None):
         self.pop_size = pop_size
         self.n_gen = n_gen
         self.problem = problem  # função de avaliação ou classe do problema
@@ -12,12 +12,23 @@ class NSGA2:
         self.xu = xu            # limites superiores
         self.population = []    # lista de indivíduos
         self.history = []       # histórico de populações
+        self.initial_population = initial_population
 
     def initialize_population(self):
-        # Vetorização da inicialização da população
-        X = np.random.uniform(self.xl, self.xu, size=(self.pop_size, len(self.xl) if hasattr(self.xl, '__len__') else 1))
-        # Criação vetorizada dos indivíduos
-        self.population = [Individual(x) for x in X]
+        if self.initial_population is not None:
+            # Usa a população inicial fornecida
+            self.population = [Individual(x) for x in self.initial_population]
+            # Completa com indivíduos aleatórios se necessário
+            n_missing = self.pop_size - len(self.population)
+            if n_missing > 0:
+                X = np.random.uniform(self.xl, self.xu, size=(n_missing, len(self.xl) if hasattr(self.xl, '__len__') else 1))
+                self.population += [Individual(x) for x in X]
+            self.population = self.population[:self.pop_size]
+        else:
+            # Vetorização da inicialização da população
+            X = np.random.uniform(self.xl, self.xu, size=(self.pop_size, len(self.xl) if hasattr(self.xl, '__len__') else 1))
+            # Criação vetorizada dos indivíduos
+            self.population = [Individual(x) for x in X]
 
     def evaluate_population(self):
         # Vetorizado: avalia todos os indivíduos de uma vez
