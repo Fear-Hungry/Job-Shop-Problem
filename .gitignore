@@ -16,5 +16,33 @@ venv/
 .vscode/
 .devcontainer/
 .github/
+.cursor/
+
+# Ignore test and coverage files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ignore build and distribution files
+build/
+dist/
+*.egg-info/
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Ignore output directories and files
+output/
+
+# Ignore local configuration files
+*.local.py
+*.local.json
+*.local.yml
+
+# Ignore Jupyter notebook checkpoints
+.ipynb_checkpoints/
 
 /workspaces/Job-Shop-Problem/Dockerfile
+/workspaces/Job-Shop-Problem/output

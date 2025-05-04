@@ -4,6 +4,7 @@ Módulo principal que fornece a classe Solver para resolver o problema Job Shop 
 from models.schedule import Schedule
 from validators.schedule_validator import ScheduleValidator
 from solvers.ortools_cpsat_solver import ORToolsCPSATSolver
+from solvers.genetic_solver import GeneticSolver
 
 
 class Solver:
@@ -11,7 +12,8 @@ class Solver:
     Classe principal para resolver o problema Job Shop Scheduling.
     Mantida para compatibilidade com o código existente.
     """
-    def __init__(self, jobs, num_jobs, num_machines):
+
+    def __init__(self, jobs, num_jobs, num_machines, solver_type="cpsat", **kwargs):
         """
         Inicializa uma instância de Solver para o problema Job Shop Scheduling.
 
@@ -19,8 +21,13 @@ class Solver:
             jobs (list[list[tuple[int, int]]]): Lista de jobs, onde cada job é uma lista de pares (máquina, duração).
             num_jobs (int): Número de jobs.
             num_machines (int): Número de máquinas.
+            solver_type (str): "cpsat" para OR-Tools CP-SAT, "ga" para Algoritmo Genético.
+            **kwargs: Parâmetros adicionais para o solver genético.
         """
-        self.solver = ORToolsCPSATSolver(jobs, num_jobs, num_machines)
+        if solver_type == "ga":
+            self.solver = GeneticSolver(jobs, num_jobs, num_machines, **kwargs)
+        else:
+            self.solver = ORToolsCPSATSolver(jobs, num_jobs, num_machines)
         self.validator = ScheduleValidator(jobs, num_jobs, num_machines)
         self.jobs = jobs
         self.num_jobs = num_jobs
@@ -29,11 +36,9 @@ class Solver:
 
     def solve(self, time_limit=30):
         """
-        Resolve o problema Job Shop Scheduling usando Google OR-Tools CP-SAT.
-        
+        Resolve o problema Job Shop Scheduling usando o solver selecionado.
         Args:
             time_limit (int): Limite máximo de tempo em segundos para o solver.
-            
         Returns:
             list[tuple[int, int, int, int, int]]: Uma lista de operações agendadas no formato
                 (job_id, operation_index, machine_id, start_time, duration).
