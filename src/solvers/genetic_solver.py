@@ -4,6 +4,7 @@ import time
 import functools
 import concurrent.futures
 import numpy as np
+from typing import List, Dict, Callable, Optional, Any
 
 # Use absolute imports from the 'src' directory
 from solvers.base_solver import BaseSolver
@@ -37,7 +38,13 @@ class GeneticSolver(BaseSolver):
         # Estratégias
         if local_search_strategy is None:
             self.local_search_strategy = VNDLocalSearch(
-                self._fitness_chromosome)
+                fitness_func=self._fitness_chromosome,
+                jobs=self.jobs,              # Passa jobs
+                num_machines=self.num_machines,  # Passa num_machines
+                # Manter outros defaults ou configurar? Por ora, só seed.
+                random_seed=42
+                # Adicionar outros params de VND aqui se necessário
+            )
         else:
             self.local_search_strategy = local_search_strategy
         if crossover_strategy is None:
@@ -462,10 +469,22 @@ class GeneticSolver(BaseSolver):
                 elites = [population[i] for i in elite_indices]
                 # Aplica VND avançado apenas nos elites
                 for idx, elite in enumerate(elites):
+                    # Cria instância de VND, passando os dados do problema
                     vnd = VNDLocalSearch(
-                        self._fitness_chromosome, use_advanced_neighborhoods=True)
-                    elites[idx] = {'chromosome': vnd.local_search(
-                        elite['chromosome']), 'dsu': elite['dsu']}
+                        fitness_func=self._fitness_chromosome,
+                        jobs=self.jobs,              # Passa jobs
+                        num_machines=self.num_machines,  # Passa num_machines
+                        use_advanced_neighborhoods=True,
+                        # Outros parâmetros podem ser configurados aqui,
+                        # ex: lns_solver_time_limit=0.2
+                    )
+                    try:
+                        improved_chrom = vnd.local_search(elite['chromosome'])
+                        elites[idx] = {
+                            'chromosome': improved_chrom, 'dsu': elite['dsu']}
+                    except Exception as e:
+                        print(f"Erro durante VND no elite {idx}: {e}")
+                        pass
                 next_population = elites + \
                     next_population[:self.population_size - self.elite_size]
                 population = next_population
