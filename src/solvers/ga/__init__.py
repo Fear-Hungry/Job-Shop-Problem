@@ -11,7 +11,7 @@ from .crossover import OrderCrossover, PMXCrossover, CycleCrossover, PositionBas
 from .mutation import StandardMutation, DisjunctiveMutation
 
 # Local Search
-from .local_search import VNDLocalSearch
+from local_search.strategies import VNDLocalSearch
 
 # Classes auxiliares
 from .fitness import FitnessEvaluator

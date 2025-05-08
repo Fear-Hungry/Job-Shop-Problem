@@ -12,7 +12,7 @@ from .genetic_operators import (
     CrossoverStrategy, MutationStrategy, LocalSearchStrategy,
     OrderCrossover, PMXCrossover, CycleCrossover, PositionBasedCrossover, DisjunctiveCrossover
 )
-from .local_search.strategies import VNDLocalSearch
+from local_search.strategies import VNDLocalSearch
 from .mutation.strategies import StandardMutation, DisjunctiveMutation
 from .population.diversity import population_diversity
 from .graph.disjunctive_graph import DisjunctiveGraph

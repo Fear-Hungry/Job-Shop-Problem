@@ -44,5 +44,28 @@ output/
 # Ignore Jupyter notebook checkpoints
 .ipynb_checkpoints/
 
+# Arquivos de configuração locais
+.env.*
+*.env
+
+# Arquivos de backup e temporários de editores
+*~
+*.swp
+*.bak
+
+# Cache de ferramentas
+.mypy_cache/
+
+# Arquivos de configuração de ferramentas locais
+.pylintrc
+.mypy.ini
+
+# Arquivos de lock de dependências
+Pipfile.lock
+poetry.lock
+
+# Dados locais (remova se quiser versionar a pasta data)
+data/
+
 /workspaces/Job-Shop-Problem/Dockerfile
 /workspaces/Job-Shop-Problem/output

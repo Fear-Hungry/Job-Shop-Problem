@@ -16,7 +16,7 @@ from solvers.ga.genetic_operators import (
     CrossoverStrategy, MutationStrategy, LocalSearchStrategy,
     OrderCrossover, PMXCrossover, CycleCrossover, PositionBasedCrossover, DisjunctiveCrossover
 )
-from solvers.ga.local_search.strategies import VNDLocalSearch
+from local_search.strategies import VNDLocalSearch
 from solvers.ga.mutation.strategies import StandardMutation, DisjunctiveMutation
 from solvers.ga.population.diversity import population_diversity
 from solvers.ga.graph.disjunctive_graph import DisjunctiveGraph
