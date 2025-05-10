@@ -35,11 +35,5 @@ O NSGA-II é um algoritmo genético multiobjetivo popular, projetado para encont
 
 **Implementação no Código:**
 
-*   **Estrutura:** A lógica principal do NSGA-II e seus componentes estão implementados no diretório `src/solvers/ga/`.
-*   **Operadores Genéticos (`genetic_operators.py`):** Este arquivo contém as implementações dos operadores de cruzamento (crossover) e mutação adaptados para a representação do JSSP utilizada. Podem existir diferentes tipos de operadores implementados.
-*   **Codificação:** A forma como uma solução (cronograma) é codificada como um cromossomo para o algoritmo genético é um aspecto crucial. (Necessário verificar detalhes da codificação usada).
-*   **Avaliação:** A função de avaliação calcula os valores dos objetivos (makespan, etc.) para cada indivíduo (solução) na população.
-*   **Diversidade (`diversity.py`):** Contém a implementação do cálculo da *crowding distance*.
-*   **Grafo Disjuntivo (`disjunctive_graph.py`):** Pode ser usado para modelar as restrições do JSSP e auxiliar no cálculo do makespan ou na validação dos cronogramas. (Necessário verificar o uso específico).
-
-*(Esta seção será atualizada conforme mais detalhes da implementação forem analisados ou novos componentes forem adicionados.)*
+*   **Estrutura:** A lógica principal do NSGA-II e seus componentes estão implementados no diretório `src/ga/`.
+*   **Operadores Genéticos (`

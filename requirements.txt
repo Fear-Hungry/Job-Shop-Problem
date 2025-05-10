@@ -1,3 +1,7 @@
 numpy
 ortools
 bayesian-optimization
+gymnasium
+stable-baselines3
+torch
+tqdm

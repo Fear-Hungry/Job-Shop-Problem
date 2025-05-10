@@ -12,15 +12,15 @@ from models.schedule import Schedule
 from solvers.ortools_cpsat_solver import ORToolsCPSATSolver
 
 # Importações específicas do GA (também absolutas a partir de 'src')
-from solvers.ga.genetic_operators import (
-    CrossoverStrategy, MutationStrategy, LocalSearchStrategy,
+from ga.genetic_operators.crossover import (
     OrderCrossover, PMXCrossover, CycleCrossover, PositionBasedCrossover, DisjunctiveCrossover
 )
+from ga.genetic_operators.mutation import StandardMutation, DisjunctiveMutation
+from ga.genetic_operators.base import CrossoverStrategy, MutationStrategy, LocalSearchStrategy
 from local_search.strategies import VNDLocalSearch
-from solvers.ga.mutation.strategies import StandardMutation, DisjunctiveMutation
-from solvers.ga.population.diversity import population_diversity
-from solvers.ga.graph.disjunctive_graph import DisjunctiveGraph
-from solvers.ga.graph.dsu import DSU
+from ga.population.diversity import population_diversity
+from ga.graph.disjunctive_graph import DisjunctiveGraph
+from ga.graph.dsu import DSU
 
 
 class GeneticSolver(BaseSolver):

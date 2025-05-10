@@ -2,6 +2,8 @@ import random
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 import logging
+from .simple_operators import SwapOperator, InversionOperator, ScrambleOperator, TwoOptOperator, ThreeOptOperator
+from .block_operators import BlockMoveOperator, BlockSwapOperator
 
 logger = logging.getLogger(__name__)
 

@@ -275,7 +275,11 @@ class VNDLocalSearch(LocalSearchStrategy):
     # _apply_block_move, _apply_block_swap foram movidos para neighborhood_operators.py
 
     # --- MANTIDOS: Métodos de Operador de Vizinhança Complexos ---
-    def _apply_lns_shake(self, chrom: list) -> list:
+    def _apply_lns_shake(self, chrom: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """
+        Aplica o operador LNS Shake: embaralha uma fração do cromossomo usando um solver exato ou aleatoriedade.
+        Útil para diversificação global quando a busca local estagna.
+        """
         size = len(chrom)
         if not self.perform_lns_shake or size < 2:
             return chrom
@@ -334,7 +338,11 @@ class VNDLocalSearch(LocalSearchStrategy):
                 new_chrom[original_index] = values_to_shuffle[i]
         return new_chrom
 
-    def _apply_critical_insert(self, chrom: list) -> list:
+    def _apply_critical_insert(self, chrom: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """
+        Move uma operação da rota crítica para outra posição válida na mesma máquina.
+        Permite explorar vizinhanças baseadas na estrutura do caminho crítico.
+        """
         completion_times, critical_path, _ = calculate_schedule_and_critical_path(chrom, self.jobs_data, self.num_machines)
         if not critical_path or len(critical_path) < 1:
             return chrom
@@ -374,7 +382,11 @@ class VNDLocalSearch(LocalSearchStrategy):
         logger.debug(f"    Critical Insert: Movi {op_to_move} para índice {chosen_insertion_point_in_original_chrom}.")
         return new_chrom
 
-    def _apply_critical_block_swap(self, chrom: list) -> list:
+    def _apply_critical_block_swap(self, chrom: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """
+        Troca blocos de operações dentro do caminho crítico, respeitando restrições de precedência.
+        Útil para grandes saltos estruturais guiados pelo caminho crítico.
+        """
         completion_times, critical_path, _ = calculate_schedule_and_critical_path(chrom, self.jobs_data, self.num_machines)
         if not critical_path or len(critical_path) < 2:
             return chrom
@@ -410,7 +422,10 @@ class VNDLocalSearch(LocalSearchStrategy):
         logger.debug(f"    Critical Block Swap: Trocou {chrom[idx1]} com {chrom[idx2]}")
         return new_chrom
 
-    def _apply_critical_2opt(self, chrom: list) -> list:
+    def _apply_critical_2opt(self, chrom: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """
+        Aplica 2-opt restrito ao caminho crítico, invertendo segmentos críticos.
+        """
         completion_times, critical_path, _ = calculate_schedule_and_critical_path(chrom, self.jobs_data, self.num_machines)
         if not critical_path or len(critical_path) < 2:
             return chrom
@@ -436,11 +451,9 @@ class VNDLocalSearch(LocalSearchStrategy):
         logger.debug(f"    Critical 2-opt: Inverteu o bloco crítico [{a}:{b}].")
         return new_chrom
 
-    def _apply_critical_lns(self, chrom: list) -> list:
+    def _apply_critical_lns(self, chrom: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """
-        Gera um subproblema LNS ao longo de um bloco do caminho crítico.
-        Seleciona um bloco de tamanho até 5 operações do caminho crítico (possivelmente restringido a uma janela temporal)
-        e resolve com CP-SAT para reotimizar essa porção.
+        Aplica LNS restrito ao caminho crítico, embaralhando apenas operações críticas.
         """
         # Calcula rota crítica e makespan
         completion_times, critical_path, makespan = calculate_schedule_and_critical_path(
@@ -494,8 +507,10 @@ class VNDLocalSearch(LocalSearchStrategy):
         return new_chrom
 
     # --- Novo método para reparar sequências ---
-    def _repair_sequence(self, chrom: list) -> list:
-        """Repara o cromossomo para garantir precedência de operações dentro de cada job."""
+    def _repair_sequence(self, chrom: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """
+        Repara a sequência do cromossomo para garantir validade após operadores destrutivos.
+        """
         new_chrom = list(chrom)
         for job_id in range(len(self.jobs_data)):
             ops_j = [op for op in new_chrom if op[0] == job_id]
@@ -513,7 +528,10 @@ class VNDLocalSearch(LocalSearchStrategy):
             new_chrom = result
         return new_chrom
 
-    def local_search(self, chromosome, use_advanced: Optional[bool] = None):
+    def local_search(self, chromosome: List[Tuple[int, int]], use_advanced: Optional[bool] = None) -> List[Tuple[int, int]]:
+        """
+        Executa a busca local sobre o cromossomo fornecido, retornando a melhor solução encontrada.
+        """
         start_vnd_time = time.time()
         vnd_iterations = 0
         non_improving_iterations = 0

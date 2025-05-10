@@ -8,12 +8,10 @@ import numpy as np
 from solvers.base_solver import BaseSolver
 from models.schedule import Schedule
 from solvers.ortools_cpsat_solver import ORToolsCPSATSolver
-from .genetic_operators import (
-    CrossoverStrategy, MutationStrategy, LocalSearchStrategy,
-    OrderCrossover, PMXCrossover, CycleCrossover, PositionBasedCrossover, DisjunctiveCrossover
-)
+from .genetic_operators.crossover import OrderCrossover, PMXCrossover, CycleCrossover, PositionBasedCrossover, DisjunctiveCrossover
+from .genetic_operators.mutation import StandardMutation, DisjunctiveMutation
+from .genetic_operators.base import CrossoverStrategy, MutationStrategy, LocalSearchStrategy
 from local_search.strategies import VNDLocalSearch
-from .mutation.strategies import StandardMutation, DisjunctiveMutation
 from .population.diversity import population_diversity
 from .graph.disjunctive_graph import DisjunctiveGraph
 from .graph.dsu import DSU
