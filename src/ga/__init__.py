@@ -1,4 +1,5 @@
-from .solver import GeneticSolver
+# -*- coding: utf-8 -*-
+# Pacote GA para heurísticas e operadores
 
 # Operadores
 from .genetic_operators.base import CrossoverStrategy, MutationStrategy, LocalSearchStrategy
@@ -12,9 +13,8 @@ from .genetic_operators.crossover import OrderCrossover, PMXCrossover, CycleCros
 from .genetic_operators.mutation import StandardMutation, DisjunctiveMutation
 
 # Local Search
-from local_search.strategies import VNDLocalSearch
+# from local_search.strategies import VNDLocalSearch # VND é importado onde necessário, não aqui
 
-# Classes auxiliares
-from .fitness import FitnessEvaluator
-from .initialization import PopulationInitializer
-from .selection import SelectionOperator
+# Classes auxiliares (Removidas pois não existem ou não são usadas aqui)
+# from .initialization import PopulationInitializer # Removido
+# from .selection import SelectionOperator # Removido

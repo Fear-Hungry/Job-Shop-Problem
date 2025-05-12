@@ -90,6 +90,7 @@ def main(instance_path):
                 if ga_result_chromosome:
                     best_overall_chromosome = ga_result_chromosome
 
+            best_overall_makespan = ga_makespan
         # --- Fase 3: Busca Local Final (VND com operadores de CP) ---
         if remaining_time_after_ga > 1 and best_overall_chromosome is not None: # Tempo mínimo e cromossomo válido
             print(f"\nExecutando Busca Local Final (VND) com tempo restante: {remaining_time_after_ga:.2f} segundos...")

@@ -108,43 +108,56 @@ class DisjunctiveCrossover(CrossoverStrategy):
 
     def crossover(self, parent1, parent2, machine_ops_builder, graph_builder, use_dsu=False, dsu=None):
         child_machine_ops = {}
-        for m in machine_ops_builder(parent1).keys():
-            ops1 = machine_ops_builder(parent1)[m]
-            ops2 = machine_ops_builder(parent2)[m]
+        all_machine_ids = machine_ops_builder(parent1).keys()
+        if not all_machine_ids:
+            all_machine_ids = range(len(machine_ops_builder(parent1)))
+
+        for m in all_machine_ids:
+            ops1 = machine_ops_builder(parent1).get(m, [])
+            ops2 = machine_ops_builder(parent2).get(m, [])
+            
+            if not ops1 and not ops2:
+                child_machine_ops[m] = []
+                continue
+            elif not ops1:
+                child_machine_ops[m] = ops2[:]
+                continue
+            elif not ops2:
+                child_machine_ops[m] = ops1[:]
+                continue
+                
             size = len(ops1)
+            if len(ops2) != size:
+                child_machine_ops[m] = ops1[:]
+                continue
+
             a, b = sorted(random.sample(range(size), 2))
-            child_ops = [None]*size
-            child_ops[a:b] = ops1[a:b]
-            fill = [op for op in ops2 if op not in child_ops[a:b]]
+            child_ops_for_machine = [None]*size
+            child_ops_for_machine[a:b] = ops1[a:b]
+            
+            fill_ops = [op for op in ops2 if op not in child_ops_for_machine[a:b]]
+            
             idx = 0
             for i in range(size):
-                if child_ops[i] is None:
-                    child_ops[i] = fill[idx]
-                    idx += 1
-            child_machine_ops[m] = child_ops
+                if child_ops_for_machine[i] is None:
+                    if idx < len(fill_ops):
+                        child_ops_for_machine[i] = fill_ops[idx]
+                        idx += 1
+                    else:
+                        pass
+            
+            child_machine_ops[m] = child_ops_for_machine
+        
         new_chrom = []
-        for m in sorted(child_machine_ops.keys()):
-            new_chrom.extend(child_machine_ops[m])
-        if use_dsu and dsu is not None:
-            for m, ops in child_machine_ops.items():
-                indices_afetados = [i for i in range(len(ops))]
-                dsu.reset_partial(indices_afetados)
-                for i in range(len(ops) - 1):
-                    dsu.union(i, i+1)
-                for i in range(len(ops) - 1):
-                    if dsu.connected(i, i+1):
-                        return parent1
-        elif use_dsu:
-            graph = graph_builder(new_chrom, use_dsu=True)
-            for m, ops in child_machine_ops.items():
-                for i in range(len(ops) - 1):
-                    u = i
-                    v = i + 1
-                    if graph.dsu is not None and graph.dsu.connected(u, v):
-                        return parent1
+        for m_id in sorted(child_machine_ops.keys()):
+            new_chrom.extend(child_machine_ops[m_id])
+
         graph = graph_builder(new_chrom)
+        
         if graph.has_cycle():
             return parent1
+
         if self.local_search_strategy:
             return self.local_search_strategy.local_search(new_chrom)
+        
         return new_chrom

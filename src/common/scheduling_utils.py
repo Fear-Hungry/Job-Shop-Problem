@@ -1,10 +1,11 @@
 import collections
+import heapq # Importar heapq
 
 # --- Static Helper Function for Schedule Calculation ---
 def _calculate_schedule_details_static(chromosome, jobs, num_jobs, num_machines):
     """
-    Static helper function to calculate schedule details (operations list and makespan).
-    Can be called from different processes without pickling the entire Solver object.
+    Static helper function to calculate schedule details (operations list and makespan)
+    using a min-heap for efficient selection of the next operation.
 
     Args:
         chromosome (list[tuple[int, int]]): Operation sequence.
@@ -41,75 +42,82 @@ def _calculate_schedule_details_static(chromosome, jobs, num_jobs, num_machines)
         # print(f"Static Helper: Invalid chromosome structure.")
         return None, float('inf')
 
-    # Simulation Setup
+    # --- Simulation Setup using Heap --- 
     machine_available = [0] * num_machines
     job_completion_time = [0] * num_jobs
-    job_next_op_idx = [0] * num_jobs # Tracks which operation of a job is next *expected*
-    op_priority = {op: i for i, op in enumerate(chromosome)}
+    job_next_op_idx = [0] * num_jobs # Tracks the *index* of the next operation for each job
+    op_priority = {op: i for i, op in enumerate(chromosome)} # Priority based on chromosome order
     
-    ready_operations = set()
+    ready_heap = [] # Min-heap: (earliest_start_time, priority_value, job_id, op_id_in_job)
+    
+    # Initialize heap with the first operation of each job
     for j in range(num_jobs):
         if len(jobs[j]) > 0:
-            ready_operations.add((j, 0)) # (job_id, op_id_within_job)
+            op_id_in_job = 0
+            job_id = j
+            priority = op_priority[(job_id, op_id_in_job)]
+            # Initial earliest start is 0, as job_completion and machine_available are 0
+            heapq.heappush(ready_heap, (0, priority, job_id, op_id_in_job))
 
     num_scheduled = 0
     current_makespan = 0.0
 
+    processed_in_this_step = set() # Avoid infinite loops if heap logic fails
+
     while num_scheduled < num_ops_total:
-        best_op_to_schedule = None
-        min_earliest_start_time = float('inf')
-        best_priority_val = float('inf')
+        if not ready_heap:
+            # Should not happen if logic is correct and graph is valid
+            # print("Error: Ready heap is empty but not all operations scheduled.")
+            # Check if stuck due to some issue
+            if num_scheduled < num_ops_total:
+                 # If truly stuck, return invalid
+                 # print(f"Stuck: Scheduled {num_scheduled}/{num_ops_total}")
+                 return None, float('inf') 
+            else: # All scheduled, break normally (though loop condition should handle this)
+                 break
 
-        if not ready_operations:
-            # print("Static Helper Error: No ready operations but not all scheduled.")
-            return None, float('inf') 
+        # Pop the operation with the lowest start time / priority
+        potential_est, priority_val, job_id, op_id = heapq.heappop(ready_heap)
 
-        for job_id, op_id in ready_operations:
-            # op_id is the index within the specific job's list of operations
-            machine_id, duration = jobs[job_id][op_id]
+        # --- Check if the popped operation is truly ready --- 
+        machine_id, duration = jobs[job_id][op_id]
+        actual_earliest_start = max(job_completion_time[job_id], machine_available[machine_id])
+
+        if actual_earliest_start > potential_est:
+            # The start time has shifted due to other operations completing.
+            # Re-push with the updated actual earliest start time.
+            heapq.heappush(ready_heap, (actual_earliest_start, priority_val, job_id, op_id))
+            # Continue to the next iteration to pop the new best candidate
+            continue 
             
-            earliest_start_time = max(job_completion_time[job_id], machine_available[machine_id])
-            current_priority_for_op = op_priority[(job_id, op_id)]
+        # --- Schedule the operation --- 
+        start_time_sched = actual_earliest_start # Use the actual calculated start time
+        finish_time_sched = start_time_sched + duration
 
-            if earliest_start_time < min_earliest_start_time:
-                min_earliest_start_time = earliest_start_time
-                best_priority_val = current_priority_for_op
-                best_op_to_schedule = (job_id, op_id)
-            elif earliest_start_time == min_earliest_start_time and current_priority_for_op < best_priority_val:
-                best_priority_val = current_priority_for_op
-                best_op_to_schedule = (job_id, op_id)
-
-        if best_op_to_schedule is None:
-            # print("Static Helper Error: Could not select an operation.")
-            return None, float('inf')
-
-        j_sched, k_sched = best_op_to_schedule # k_sched is op_id_within_job
-        m_sched, d_sched = jobs[j_sched][k_sched]
-        start_time_sched = min_earliest_start_time 
-        finish_time_sched = start_time_sched + d_sched
-
-        scheduled_ops_list.append((j_sched, k_sched, m_sched, start_time_sched, d_sched))
+        scheduled_ops_list.append((job_id, op_id, machine_id, start_time_sched, duration))
         num_scheduled += 1
 
-        machine_available[m_sched] = finish_time_sched
-        job_completion_time[j_sched] = finish_time_sched
+        # Update state
+        machine_available[machine_id] = finish_time_sched
+        job_completion_time[job_id] = finish_time_sched
         current_makespan = max(current_makespan, finish_time_sched)
-        job_next_op_idx[j_sched] += 1 # This job has completed one more operation
+        job_next_op_idx[job_id] += 1 # Increment index for the *next* operation of this job
 
-        ready_operations.remove((j_sched, k_sched))
-
-        next_op_for_this_job = job_next_op_idx[j_sched]
-        if next_op_for_this_job < len(jobs[j_sched]):
-            ready_operations.add((j_sched, next_op_for_this_job))
+        # Add the next operation of this job to the heap if it exists
+        next_op_idx_for_job = job_next_op_idx[job_id]
+        if next_op_idx_for_job < len(jobs[job_id]):
+            next_op_id = next_op_idx_for_job
+            next_machine_id, _ = jobs[job_id][next_op_id]
+            next_priority = op_priority[(job_id, next_op_id)]
+            # Calculate potential earliest start for the next op
+            next_potential_est = max(job_completion_time[job_id], machine_available[next_machine_id])
+            heapq.heappush(ready_heap, (next_potential_est, next_priority, job_id, next_op_id))
 
     if num_scheduled != num_ops_total:
-        # print(f"Static Helper Error: Scheduled op count mismatch.")
+        # print(f"Static Helper Error: Scheduled op count mismatch at the end.")
         return None, float('inf')
     
-    # Ensure makespan is correct using max of machine available times too
     final_makespan_check = max(machine_available) if machine_available else 0
-    # It could be that current_makespan (max of op finish times) is already correct
-    # but using max(machine_available) is a robust way to get it.
 
     return scheduled_ops_list, final_makespan_check
 
