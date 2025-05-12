@@ -20,7 +20,7 @@ from .graph.dsu import DSU
 class GeneticSolver(BaseSolver):
     def __init__(self, jobs, num_jobs, num_machines, population_size=30, generations=100, crossover_rate=0.8, mutation_rate=0.2, elite_size=1,
                  crossover_strategy=None, mutation_strategy=None, local_search_strategy=None, use_dsu=True,
-                 initial_schedule=None, ucb_exploration_factor=2.0):
+                 initial_schedule=None, ucb_exploration_factor=2.0, stagnation_limit=None):
         super().__init__(jobs, num_jobs, num_machines)
         self.population_size = population_size
         self.generations = generations
@@ -29,6 +29,7 @@ class GeneticSolver(BaseSolver):
         self.elite_size = elite_size
         self.elitism_type = None  # Será definido aleatoriamente no solve
         self.use_dsu = use_dsu
+        self.stagnation_limit = stagnation_limit
 
         # Define a função de fitness como método para evitar repetição
         self._fitness_func = self._fitness_chromosome
@@ -491,7 +492,7 @@ class GeneticSolver(BaseSolver):
         # Retorna um NOVO dicionário representando o indivíduo mutado
         # Mantém outros dados do indivíduo original se houver (ex: fitness antigo, etc.)
         # mas atualiza o cromossomo e adiciona o índice do operador usado.
-        new_indiv = indiv.copy()  # Cria cópia rasa
+        new_indiv = copy.deepcopy(indiv)  # Cria cópia PROFUNDA
         new_indiv['chromosome'] = mutated_chrom_tuple
         # Armazena qual operador foi usado
         new_indiv['mutation_op_idx'] = op_idx
@@ -682,6 +683,10 @@ class GeneticSolver(BaseSolver):
         # Armazena histórico de fitness para análise
         fitness_history = [best_fitness_overall]
 
+        # Variáveis para controle de estagnação
+        generations_without_improvement = 0
+        last_best_fitness = best_fitness_overall
+
         # --- Loop Principal por Gerações ---
         for generation in range(self.generations):
             gen_start_time = time.time()
@@ -797,6 +802,9 @@ class GeneticSolver(BaseSolver):
                 best_chromosome_overall = copy.deepcopy(
                     population[best_idx_gen]['chromosome'])
                 # print(f"  *** Novo melhor fitness geral encontrado: {best_fitness_overall:.2f} ***")
+                generations_without_improvement = 0
+            else:
+                generations_without_improvement += 1
 
             fitness_history.append(best_fitness_overall)
 
@@ -809,6 +817,10 @@ class GeneticSolver(BaseSolver):
             elapsed_time = time.time() - start_time
             if time_limit is not None and elapsed_time > time_limit:
                 # print(f"\nLimite de tempo ({time_limit}s) atingido na geração {generation + 1}.")
+                break
+            # Parada por Estagnação
+            if self.stagnation_limit is not None and generations_without_improvement >= self.stagnation_limit:
+                # print(f"\nEstagnação detectada: Sem melhoria por {self.stagnation_limit} gerações (na geração {generation + 1}).")
                 break
 
         # --- Fim do Loop ---
