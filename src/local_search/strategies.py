@@ -593,6 +593,11 @@ class VNDLocalSearch(LocalSearchStrategy):
             neighbors_evaluated_total_iter = 0
             reward_for_reactive_update = 0.0
             best_improvement_in_iter = 0.0
+            chosen_operator_for_reactive_update = None # Inicializar aqui
+            shake_just_happened = False # Flag para controlar terminação pós-shake
+
+            # Log inicial da iteração
+            logger.debug(f"--- VND Iter {vnd_iterations} Start --- Best Fit: {best_fit:.2f}")
 
             if self.use_orchestrator:
                 if self.orchestrator is None:
@@ -610,14 +615,23 @@ class VNDLocalSearch(LocalSearchStrategy):
                 logger.debug(f"      [Orch Iter {vnd_iterations}] Picked: {nh_type.name} (Tries: {self.orchestrator_tries_per_pick})")
                 improvement_found_in_pick = False
                 candidates_to_evaluate = []
-                for _ in range(self.orchestrator_tries_per_pick):
+                for try_num in range(self.orchestrator_tries_per_pick):
                     raw_candidate = operator_method(best_chrom)
+                    # Log antes e depois do reparo
+                    logger.debug(f"        Try {try_num+1}: Raw candidate (first 10): {raw_candidate[:10]}")
                     candidate_chrom = self._repair_sequence(raw_candidate)
+                    logger.debug(f"        Try {try_num+1}: Repaired candidate (first 10): {candidate_chrom[:10]}")
+
                     if candidate_chrom != best_chrom:
                         candidate_tuple = tuple(candidate_chrom)
                         if candidate_tuple not in evaluated_solutions_cache:
+                            logger.debug(f"        Try {try_num+1}: New candidate found.")
                             candidates_to_evaluate.append(candidate_chrom)
                             evaluated_solutions_cache.add(candidate_tuple)
+                        else:
+                            logger.debug(f"        Try {try_num+1}: Candidate already in cache.")
+                    else:
+                         logger.debug(f"        Try {try_num+1}: Candidate same as best after repair.")
 
                 if not candidates_to_evaluate:
                     logger.debug(f"        Nenhum candidato novo gerado por {nh_type.name}.")
@@ -627,6 +641,7 @@ class VNDLocalSearch(LocalSearchStrategy):
                         try:
                             fit = self.fitness_func(candidate)
                             neighbors_evaluated_total_iter += 1
+                            logger.debug(f"        Evaluating candidate. Fitness: {fit:.2f}") # Log fitness do candidato
                             if fit < best_fit:
                                 previous_fit = best_fit
                                 best_chrom = candidate[:]
@@ -636,12 +651,14 @@ class VNDLocalSearch(LocalSearchStrategy):
                                 improvement_found_in_pick = True
                                 self.neighborhood_stats[nh_type]['successes'] += 1
                                 logger.debug(f"        Melhoria (VND Std) {nh_type.name}: {previous_fit:.2f} -> {best_fit:.2f}")
-                                break
+                                break # Sai do loop de candidatos se encontrar melhoria
+                            else:
+                                logger.debug(f"        Candidate fitness ({fit:.2f}) not better than best ({best_fit:.2f}).")
                         except Exception as e:
                              logger.error(f"Erro ao calcular fitness para candidato VND de {nh_type.name}: {e}", exc_info=True)
                              continue
 
-                    self.orchestrator.update(nh_type, best_improvement_in_iter)
+                    self.orchestrator.update(nh_type, reward_for_reactive_update)
                     if not improvement_found_in_pick:
                         logger.debug(f"        Nenhuma melhoria encontrada por {nh_type.name} nesta rodada.")
 
@@ -668,20 +685,26 @@ class VNDLocalSearch(LocalSearchStrategy):
                         logger.error(f"Operador VND padrão para {nh_type_std.name} não encontrado.")
                         continue
 
+                    logger.debug(f"      Trying Neighborhood: {nh_type_std.name} (Max Tries: {self.max_tries_per_neighborhood})")
                     improvement_found_in_nh = False
                     attempts_in_nh = 0
                     while attempts_in_nh < self.max_tries_per_neighborhood:
                         raw_candidate = operator_method(best_chrom)
+                        # Log antes e depois do reparo
+                        logger.debug(f"        Try {attempts_in_nh+1}: Raw candidate (first 10): {raw_candidate[:10]}")
                         candidate_chrom = self._repair_sequence(raw_candidate)
+                        logger.debug(f"        Try {attempts_in_nh+1}: Repaired candidate (first 10): {candidate_chrom[:10]}")
                         attempts_in_nh += 1
-                        neighbors_evaluated_total_iter += 1
+                        neighbors_evaluated_total_iter += 1 # Conta como avaliação mesmo que não calcule fitness? Revisar
 
                         if candidate_chrom != best_chrom:
                             candidate_tuple = tuple(candidate_chrom)
                             if candidate_tuple not in evaluated_solutions_cache:
                                 evaluated_solutions_cache.add(candidate_tuple)
+                                logger.debug(f"        Try {attempts_in_nh}: New candidate found.")
                                 try:
                                     fit = self.fitness_func(candidate_chrom)
+                                    logger.debug(f"        Evaluating candidate. Fitness: {fit:.2f}") # Log fitness
                                     if fit < best_fit:
                                         previous_fit = best_fit
                                         best_chrom = candidate_chrom[:]
@@ -691,18 +714,26 @@ class VNDLocalSearch(LocalSearchStrategy):
                                         improvement_found_in_nh = True
                                         self.neighborhood_stats[nh_type_std]['successes'] += 1
                                         logger.debug(f"        Melhoria (VND Std) {nh_type_std.name}: {previous_fit:.2f} -> {best_fit:.2f}")
-                                        break
+                                        break # Sai do while de tentativas para esta vizinhança
+                                    else:
+                                        logger.debug(f"        Candidate fitness ({fit:.2f}) not better than best ({best_fit:.2f}).")
                                 except Exception as e:
                                     logger.error(f"Erro ao calcular fitness para candidato VND de {nh_type_std.name}: {e}", exc_info=True)
                                     continue
+                            else:
+                                logger.debug(f"        Try {attempts_in_nh}: Candidate already in cache.")
+                        else:
+                             logger.debug(f"        Try {attempts_in_nh}: Candidate same as best after repair.")
 
                     self.neighborhood_stats[nh_type_std]['attempts'] += attempts_in_nh
 
                     if improvement_found_in_nh:
-                        break
+                        logger.debug(f"      Improvement found in {nh_type_std.name}. Restarting neighborhood loop.")
+                        break # Sai do loop de vizinhanças (ordered_neighborhoods)
 
+            # Log do final da iteração
             end_iter_time = time.time()
-            logger.debug(f"      [{'Orch' if self.use_orchestrator else 'VND Std'} Iter {vnd_iterations}] Evaluated: {neighbors_evaluated_total_iter} | Time: {end_iter_time - start_iter_time:.4f}s | Improved: {improvement_in_iteration} | Best: {best_fit:.2f}")
+            logger.debug(f"--- VND Iter {vnd_iterations} End --- Evaluated: {neighbors_evaluated_total_iter} | Time: {end_iter_time - start_iter_time:.4f}s | Improved: {improvement_in_iteration} | Best: {best_fit:.2f}")
 
             # --- Aprendizado Reativo de Operadores (Gradient Bandit) ---
             if chosen_operator_for_reactive_update:
@@ -779,6 +810,7 @@ class VNDLocalSearch(LocalSearchStrategy):
                         logger.warning("LNS Shake não alterou o cromossomo.")
 
                     non_improving_iterations = 0
+                    shake_just_happened = True # Indica que um shake ocorreu nesta iteração
                     logger.debug("    Contador de estagnação LNS resetado pós tentativa de shake.")
 
                 # --- Compartilhamento de Soluções entre "Threads" ---
@@ -794,9 +826,15 @@ class VNDLocalSearch(LocalSearchStrategy):
                         non_improving_iterations = 0 # Resetar estagnação pois encontramos melhoria
                         improvement_in_iteration = True # Marca como melhoria para o fluxo principal
                 elif not self.perform_lns_shake or non_improving_iterations < self.lns_shake_frequency:
-                    keep_searching = False
-                    logger.debug(f"    VND Estagnado e sem LNS shake pendente. Finalizando busca local.")
+                    # CORREÇÃO BUG 1: Não terminar imediatamente após um shake não melhorador.
+                    # Termina apenas se não houve melhoria E (não ocorreu shake nesta iteração OU LNS está desativado/não disparado)
+                    if not shake_just_happened:
+                        keep_searching = False
+                        logger.debug(f"    VND Estagnado e sem LNS shake pendente ou recém-ocorrido. Finalizando busca local.")
+                    else:
+                        logger.debug(f"    VND continua após shake não melhorador para explorar vizinhanças.")
             else:
+                # Se houve melhoria na iteração, reseta o contador de estagnação
                 non_improving_iterations = 0
 
         end_vnd_time = time.time()
