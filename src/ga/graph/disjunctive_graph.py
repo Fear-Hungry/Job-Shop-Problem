@@ -169,5 +169,5 @@ class DisjunctiveGraph:
         for op_idx in topological_order: # Iterate in topological order for a structured path
             if abs(es[op_idx] - ls[op_idx]) < 1e-6: 
                 critical_path.append(op_idx)
-        
+
         return critical_path

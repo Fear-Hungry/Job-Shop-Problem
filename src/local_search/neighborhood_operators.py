@@ -101,21 +101,9 @@ class TwoOptOperator(BaseNeighborhoodOperator):
 class ThreeOptOperator(BaseNeighborhoodOperator):
     def apply(self, chrom: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         size = len(chrom)
-        if size < 3: # 3-opt requer pelo menos 3 itens para escolher 3 pontos de corte diferentes.
-                     # Se for menor que 3, ou mesmo 4 dependendo da interpretação de "segmento", não faz sentido.
-                     # Para ter 3 segmentos não vazios entre 4 pontos (incluindo início e fim), precisa de chrom >= 3.
+        if size < 3:
             return chrom[:]
-
-        # Seleciona 3 pontos de corte distintos i, j, k. Os segmentos são S1=[0,i-1], S2=[i,j-1], S3=[j,k-1], S4=[k,size-1]
-        # Ou, se i,j,k são os índices dos elementos *após* os quais quebramos:
-        # Quebra após chrom[i], chrom[j], chrom[k]
-        # S1=chrom[0...i], S2=chrom[i+1...j], S3=chrom[j+1...k], S4=chrom[k+1...N-1]
-
-        # A implementação original selecionava a,b,c como índices e os segmentos eram chrom[:a], chrom[a:b], chrom[b:c], chrom[c:]
-        # Isso significa que a,b,c são pontos de início de segmentos (exclusive para o final do anterior).
-        # Para ter s2 e s3 não vazios, precisamos b > a e c > b.
-        if size < 3: # Garante que sample(range(size), 3) funcione
-            return chrom[:]
+        
 
         try:
             a, b, c = sorted(self.rng.sample(range(size +1), 3)) # Pontos de corte de 0 a size
@@ -127,14 +115,8 @@ class ThreeOptOperator(BaseNeighborhoodOperator):
         s3 = chrom[b:c]
         s4 = chrom[c:]
 
-        # A lógica original não garantia que s2 ou s3 fossem não-vazios, mas tinha um `if not s2 or not s3: return chrom`
-        # Se a,b,c podem ser iguais, ou adjacentes, os segmentos podem ser vazios.
-        # Ex: a=0, b=0, c=1 => s1=[], s2=[], s3=chrom[0:1], s4=chrom[1:]
-        # Para 3-opt significativo, s2 e s3 (os segmentos do meio que são manipulados) devem existir.
-        # A lógica original é mais simples: se s2 ou s3 estiverem vazios, retorna original.
-        if not s2 and not s3: # Se ambos são vazios, não há muito o que fazer. Se um é vazio, ainda pode ser como 2-opt.
-                              # A lógica original era `if not s2 or not s3: return chrom`
-            return chrom[:] # Simplificado: se os segmentos principais de troca são vazios.
+        if not s2 and not s3:
+            return chrom[:]
 
         s2_reversed = list(reversed(s2))
         s3_reversed = list(reversed(s3))
@@ -156,16 +138,7 @@ class ThreeOptOperator(BaseNeighborhoodOperator):
         # A B C -> A C' B' (S1 S3_reversed S2_reversed S4)
         if s2 and s3: possible_moves.append(s1 + s3_reversed + s2_reversed + s4)
 
-        # Casos onde S4 é movido, etc., são mais complexos e geralmente cobertos por 4-opt ou combinações.
-        # A lista original de 7 movimentos era:
-        # s1 + s2_reversed + s3 + s4,
-        # s1 + s2 + s3_reversed + s4,
-        # s1 + s2_reversed + s3_reversed + s4,
-        # s1 + s3 + s2 + s4,
-        # s1 + s3 + s2_reversed + s4,
-        # s1 + s3_reversed + s2 + s4,
-        # s1 + s3_reversed + s2_reversed + s4
-        # Todos estes dependem de s2 e s3 existirem e serem manipuláveis.
+
 
         if not possible_moves: # Se nenhum movimento foi gerado (ex: s2 ou s3 vazios)
             return chrom[:]
@@ -203,53 +176,15 @@ class BlockMoveOperator(BaseNeighborhoodOperator):
 class BlockSwapOperator(BaseNeighborhoodOperator):
     def apply(self, chrom: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         size = len(chrom)
-        if size < 2: # Precisa de pelo menos dois elementos para poder trocar (mesmo que blocos de tamanho 1)
+        if size < 2: # Precisa de pelo menos dois elementos para poder trocar
             return chrom[:]
-
-        # 1. Selecionar o primeiro bloco [a, b)
-        # Para garantir bloco de tamanho >= 1: a de 0 a size-1, b de a+1 a size
-        a = self.rng.randint(0, size - 1)
-        b = self.rng.randint(a + 1, size)
-        block1 = chrom[a:b]
-        block1_len = len(block1)
-
-        # Criar lista de índices não pertencentes ao bloco 1
-        remaining_indices = [i for i in range(size) if not (a <= i < b)]
-        if not remaining_indices or len(remaining_indices) < 1:
-            # Não há elementos suficientes fora do bloco 1 para formar um bloco 2 de tamanho >=1
-            return chrom[:]
-
-        # 2. Selecionar o segundo bloco [c, d) a partir dos índices restantes
-        # c_start_index_in_remaining: índice em remaining_indices para o início do bloco 2
-        # d_end_index_in_remaining: índice em remaining_indices para o fim do bloco 2
-
-        # Tamanho do bloco 2: de 1 até len(remaining_indices)
-        block2_len = self.rng.randint(1, len(remaining_indices))
-
-        # Ponto de início do bloco 2 nos remaining_indices
-        c_start_idx_in_rem = self.rng.randint(0, len(remaining_indices) - block2_len)
-        block2_indices_in_rem = remaining_indices[c_start_idx_in_rem : c_start_idx_in_rem + block2_len]
-
-        block2 = [chrom[i] for i in block2_indices_in_rem]
-
-        # Agora precisamos reconstruir o cromossomo. A ordem relativa dos elementos
-        # que não estão em block1 nem em block2 deve ser preservada.
-
-        # Esta lógica é mais complexa que a original que assumia blocos contíguos e não sobrepostos.
-        # A lógica original era para blocos contíguos e não sobrepostos no cromossomo original.
-        # Vou reimplementar a lógica original que era mais simples e provavelmente a intenção.
-
-        # Reset para lógica original (mais simples):
-        size = len(chrom)
-        if size < 2: return chrom[:]
-
+            
         # Bloco 1: [a,b)
         idx1_b1, idx2_b1 = sorted(self.rng.sample(range(size + 1), 2))
         a, b = idx1_b1, idx2_b1
         if a == b: return chrom[:] # Bloco de tamanho 0
-
         block1 = chrom[a:b]
-
+        
         # Bloco 2: [c,d) não sobreposto
         possible_c_starts = []
         # Tentar encontrar c,d antes de a
@@ -268,8 +203,7 @@ class BlockSwapOperator(BaseNeighborhoodOperator):
 
         c, d = self.rng.choice(possible_c_starts)
         block2 = chrom[c:d]
-
-        new_chrom = [None] * size
+        
         # Garantir que os blocos não se sobrepõem na lógica de preenchimento
         # Se Bloco 2 (c,d) vem antes de Bloco 1 (a,b)
         if d <= a:
