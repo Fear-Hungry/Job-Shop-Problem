@@ -38,15 +38,15 @@ A solução é estruturada em torno de componentes modulares que encapsulam dife
 O diagrama abaixo ilustra o fluxo principal do processo de solução implementado no projeto:
 
 ```mermaid
-graph TD
-    A[Início: Leitura da Instância do JSSP] --> B{Solver CP-SAT}
-    B -->|Solução Inicial de Alta Qualidade| C[Algoritmo Genético (GA)]
-    B -->|Timeout/Sem Solução| D[Heurísticas de Inicialização]
+flowchart TD
+    A[Leitura da Instância] --> B[Solver CP-SAT]
+    B --> C[Algoritmo Genético]
+    B --> D[Heurísticas]
     D --> C
-    C -->|Seleção Adaptativa de Operadores| E[UCB1]
+    C --> E[UCB1]
     E --> C
-    C -->|Melhores Soluções| F[Busca Local Intensiva]
-    F -->|Solução Otimizada| G[Fim: Apresentação do Cronograma]
+    C --> F[Busca Local]
+    F --> G[Solução Final]
 ```
 
 ## Detalhamento Funcional dos Componentes Algorítmicos
