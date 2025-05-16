@@ -44,81 +44,78 @@ graph TD
     B -- Timeout/Sem Solução --> D[Heurísticas de Inicialização (ex: SPT)];
     D --> C;
     C -- Seleção Adaptativa de Operadores --> E(UCB1);
-    E --> C; 
+    E --> C;
     C -- Melhores Soluções --> F[Busca Local Intensiva (VND + LNS)];
     F -- Solução Otimizada --> G[Fim: Apresentação do Cronograma Final];
 ```
 
-## Detalhamento dos Módulos Principais e Algoritmos
+## Detalhamento Funcional dos Componentes Algorítmicos
 
-A seguir, cada componente relevante e seu papel no algoritmo são detalhados.
+A seguir, os principais componentes algorítmicos e suas funcionalidades são detalhados.
 
-### 1. Representação de Soluções e Instâncias (`models/` e `common/`)
+### 1. Representação de Soluções e Gestão de Dados de Instâncias
 
-*   **Classe `Schedule` (`models/schedule.py`):** Representa uma solução (cronograma) do JSSP como uma lista de operações agendadas `(job_id, operation_index, machine_id, start_time, duration)`. Facilita o cálculo de objetivos (makespan) e a verificação de viabilidade.
-*   **Leitura e Escrita de Instâncias (`common/*`):** A função `read_jobshop_instance` lê dados de instâncias do problema. Funções como `_calculate_schedule_details_static` e `_calculate_makespan_static` constroem o cronograma a partir de um cromossomo e calculam o makespan.
-*   **Validador de Cronograma (`validators/schedule_validator.py`):** A classe `ScheduleValidator` garante que um cronograma não viole restrições (ocorrência única de operações, ordem de precedência, não sobreposição em máquinas), assegurando a factibilidade das soluções.
+*   **Estrutura de Dados para Cronogramas:** Uma solução para o JSSP é representada como um cronograma detalhado. Esta estrutura armazena uma lista de todas as operações agendadas, cada uma com informações essenciais como identificador do job, índice da operação dentro do job, máquina designada, tempo de início e duração. Esta representação facilita o cálculo de métricas de desempenho, como o makespan (tempo de conclusão da última operação), e a verificação da viabilidade da solução.
+*   **Processamento de Instâncias:** Foram implementadas rotinas para a leitura de instâncias do problema JSSP a partir de formatos de arquivo padrão. Essas rotinas extraem a descrição dos jobs (sequência de operações, máquinas e durações) e outros parâmetros relevantes, como o número total de jobs e máquinas. De forma complementar, existem funcionalidades para converter um cromossomo (a representação da solução usada internamente pelos algoritmos evolutivos) em um cronograma completo, atribuindo tempos de início válidos para cada operação e calculando o makespan associado.
+*   **Validação de Cronogramas:** Um componente de validação assegura que qualquer cronograma considerado como uma solução potencial seja factível. As verificações incluem: garantia de que cada operação de cada job apareça exatamente uma vez no cronograma; respeito à ordem de precedência das operações dentro de cada job (uma operação não pode começar antes da conclusão da operação anterior do mesmo job); e ausência de conflitos de recursos, ou seja, que em cada máquina as operações agendadas não se sobreponham no tempo. Esta validação é crucial para garantir que apenas soluções válidas sejam processadas e avaliadas.
 
-### 2. Solver CP-SAT (ORTools) e Geração da Solução Inicial
+### 2. Geração da Solução Inicial via Solver CP-SAT
 
-O projeto integra o solver CP-SAT da OR-Tools para obter soluções iniciais de alta qualidade.
+Para acelerar a convergência e fornecer um ponto de partida de alta qualidade para os algoritmos heurísticos, a solução integra um solver exato baseado em Programação por Restrições (CP-SAT), utilizando a biblioteca OR-Tools.
 
-*   **Fase 1 – Solução inicial por CP-SAT (`solvers/ortools_cpsat_solver.py`):** Uma parcela do tempo de execução é alocada para o CP-SAT gerar um cronograma inicial viável. Este cronograma é convertido em um cromossomo para o Algoritmo Genético (GA).
-*   **Inicialização da População do GA (`ga/initialization.py`):**
-    *   A solução do CP-SAT, se disponível, é convertida em cromossomo e incluída na população inicial.
-    *   Caso contrário, tenta-se obter uma solução com CP-SAT por um curto período ou aplica-se a heurística SPT (Shortest Processing Time).
-    *   A população é preenchida com perturbações aleatórias da melhor solução inicial e, se necessário, com cromossomos completamente aleatórios para garantir diversidade.
+*   **Fase de Otimização Inicial:** Uma porção configurável do tempo total de resolução pode ser alocada para que o solver CP-SAT tente encontrar uma solução ótima ou de boa qualidade para a instância do JSSP. O cronograma resultante desta fase é então transformado em uma representação de cromossomo compatível com o Algoritmo Genético.
+*   **Construção da População Inicial do GA:** A solução (ou soluções) obtida pelo CP-SAT é utilizada como semente para a população inicial do Algoritmo Genético. Caso o CP-SAT não encontre uma solução dentro do tempo limite estipulado, ou para diversificar a população inicial, podem ser empregadas heurísticas construtivas, como a regra SPT (Shortest Processing Time). Nesta heurística, as operações de todos os jobs são ordenadas globalmente por tempo de processamento crescente para formar um cromossomo base. A população é então preenchida com variações desta melhor solução inicial (obtida por CP-SAT ou heurística), geradas através da aplicação de perturbações aleatórias (como trocas de operações no cromossomo), e, se necessário, complementada com indivíduos gerados de forma totalmente aleatória para assegurar um nível adequado de diversidade genética.
 
-### 3. Algoritmo Genético (`ga/` e `solvers/genetic_solver.py`)
+### 3. Otimização por Algoritmo Genético
 
-O núcleo da solução heurística é um Algoritmo Genético focado na minimização do makespan.
+O componente central da busca heurística é um Algoritmo Genético (GA) projetado para explorar eficientemente o espaço de soluções do JSSP, com o objetivo primário de minimizar o makespan.
 
-*   **Codificação (Cromossomo):** Uma solução é uma permutação de todas as operações `(job_id, op_index)`, onde a ordem das operações de um mesmo job é respeitada. O grafo disjuntivo é usado para decodificar essa sequência em um cronograma.
-*   **Fitness e Avaliação (`ga/fitness.py`):** O fitness principal é o makespan, calculado via grafo disjuntivo (caminho crítico).
-*   **Seleção de Pais (`ga/selection.py`):** Utiliza-se majoritariamente a **seleção por torneio binário**. Elitismo é aplicado para preservar os melhores indivíduos.
-*   **Operadores de Crossover (`ga/genetic_operators/crossover.py`):**
-    *   *Clássicos*: Order Crossover (OX), Partially Mapped Crossover (PMX), Cycle Crossover (CX), Position-Based Crossover.
-    *   *Específico para JSSP*: **DisjunctiveCrossover**, que combina sequências por máquina dos pais e valida o resultado.
-    *   Muitos operadores integram **busca local embutida**, aplicando `local_search_strategy.local_search(child)` após a criação do filho.
-*   **Operadores de Mutação (`ga/genetic_operators/mutation.py`):**
-    *   *StandardMutation*: Troca (swap) duas operações aleatórias.
-    *   *Específica para JSSP*: **DisjunctiveMutation**, que troca operações em uma máquina, validando precedências.
-    *   *Focada no Caminho Crítico*: **CriticalPathSwap**, que troca operações adjacentes no caminho crítico e na mesma máquina, validando precedências.
-    *   Mutações também podem aplicar busca local no indivíduo modificado.
-*   **Integração da Busca Local no GA:**
-    1.  **Híbrido GA-LS (Memético):** Operadores de crossover e mutação podem acionar uma busca local (VND) no indivíduo gerado.
-    2.  **Fase Final de Busca Local:** Após as gerações do GA, o melhor indivíduo é submetido a uma busca local VND intensiva.
-*   **Elitismo e Renovação da População:** Os melhores indivíduos da geração atual são transferidos para a próxima, garantindo a preservação de boas soluções.
+*   **Codificação da Solução (Cromossomo):** Uma solução candidata é representada por um cromossomo que consiste em uma permutação de todas as operações de todos os jobs. Cada gene no cromossomo identifica uma operação específica (por exemplo, através de uma tupla `(job_id, op_index)`). A validade da sequência é mantida garantindo que, para cada job, suas operações apareçam na ordem correta de precedência. A decodificação desta representação em um cronograma com tempos de início explícitos é realizada utilizando a estrutura do grafo disjuntivo, que considera tanto as precedências internas dos jobs quanto a sequência de operações em cada máquina definida pelo cromossomo.
+*   **Avaliação da Qualidade (Fitness):** A principal métrica para avaliar a qualidade de um cromossomo é o seu makespan. Este valor é calculado construindo o grafo disjuntivo correspondente ao cromossomo e encontrando o comprimento do caminho crítico neste grafo.
+*   **Mecanismo de Seleção de Pais:** Para selecionar os indivíduos que participarão da reprodução, o GA emprega predominantemente a **seleção por torneio binário**. Adicionalmente, uma estratégia de **elitismo** é implementada, garantindo que uma certa quantidade dos melhores indivíduos de uma geração seja transferida diretamente para a próxima, preservando assim as melhores soluções encontradas até o momento.
+*   **Operadores de Cruzamento (Recombinação):** Diversos operadores de cruzamento foram implementados para combinar informações genéticas de dois cromossomos pais e gerar descendentes:
+    *   Operadores clássicos adaptados: Incluem *Order Crossover (OX)*, *Partially Mapped Crossover (PMX)*, *Cycle Crossover (CX)*, e *Position-Based Crossover*. Estes operadores manipulam a sequência de operações para criar novas combinações.
+    *   Operador específico para JSSP: Um **DisjunctiveCrossover** foi desenvolvido para explorar a estrutura particular do JSSP. Este operador trabalha combinando as sequências de operações por máquina de cada um dos pais. Após gerar as sequências para cada máquina, elas são reunidas e a validade do cromossomo filho resultante (ausência de ciclos no grafo disjuntivo) é verificada.
+    *   Integração com Busca Local: Opcionalmente, os filhos gerados pelos operadores de crossover podem ser imediatamente submetidos a um processo de busca local para refinar a solução antes de serem inseridos na nova população (característica de algoritmos meméticos).
+*   **Operadores de Mutação:** Para introduzir diversidade na população e evitar a convergência prematura, são utilizados os seguintes operadores de mutação:
+    *   *Mutação Padrão (StandardMutation)*: Realiza uma troca simples (swap) entre duas operações selecionadas aleatoriamente no cromossomo.
+    *   *Mutação Disjuntiva (DisjunctiveMutation)*: Um operador específico para JSSP que atua no nível de uma máquina. Seleciona uma máquina e tenta trocar a ordem de duas operações naquela máquina, validando se a troca não viola as precedências internas dos jobs envolvidos.
+    *   *Mutação no Caminho Crítico (CriticalPathSwap)*: Este operador foca em otimizar diretamente o makespan. Identifica operações adjacentes no caminho crítico do cronograma que são processadas na mesma máquina e tenta inverter sua ordem, novamente validando as restrições de precedência. O objetivo é encontrar modificações que encurtem o caminho crítico.
+    *   Similarmente ao crossover, as soluções modificadas pela mutação podem passar por uma etapa de busca local.
+*   **Integração da Busca Local no Fluxo do GA:** A busca local é integrada de duas formas principais:
+    1.  Como parte de um algoritmo memético, onde a busca local é aplicada a novos indivíduos gerados por crossover e/ou mutação.
+    2.  Como uma fase de intensificação final, onde a melhor solução encontrada pelo GA ao longo de suas gerações é submetida a um processo de busca local mais exaustivo.
+*   **Gestão da População:** Ao final de cada geração, a nova população é formada pelos descendentes gerados e pelos indivíduos preservados pelo elitismo.
 
-### 4. Algoritmo UCB1 e Seleção Adaptativa de Operadores (`ga/operators/ucb.py`)
+### 4. Seleção Adaptativa de Operadores Genéticos (UCB1)
 
-O algoritmo UCB1 (Upper Confidence Bound) é usado para selecionar adaptativamente os operadores genéticos, balanceando exploração e aproveitamento.
+Para otimizar a aplicação dos diversos operadores genéticos (crossover e mutação) disponíveis, foi implementado um mecanismo de seleção adaptativa baseado no algoritmo UCB1 (Upper Confidence Bound).
 
-*   **Lógica do UCB1:** Escolhe o operador que maximiza o score: $\text{score}_i = \bar{R}_i + c \sqrt{\frac{\ln N}{n_i}}$, onde $\bar{R}_i$ é a recompensa média do operador $i$, $N$ é o total de seleções, $n_i$ é o número de usos do operador $i$, e $c$ é um fator de exploração.
-    *   Inicialmente, todos os operadores são testados.
-    *   Posteriormente, seleciona-se o operador com o maior score UCB1.
-*   **Recompensas dos Operadores:**
-    *   *Crossover*: Melhoria do makespan do filho em relação ao melhor dos pais (`reward = max(0, min_fitness_parents - fitness_child)`).
-    *   *Mutação*: Melhoria do makespan do indivíduo após a mutação (`reward_mut = max(0, fitness_before - fitness_after)`).
-*   **Atualização de Probabilidades de Seleção:**
-    *   Ao final de cada geração, as recompensas médias são usadas para atualizar uma pontuação exponencialmente amortizada para cada operador.
-    *   Essas pontuações são convertidas em probabilidades normalizadas para a seleção na próxima geração.
-*   **Seleção do Operador em Tempo de Execução:** Um operador é escolhido probabilisticamente (roleta) com base nessas probabilidades adaptativas.
+*   **Princípio do UCB1:** Este algoritmo, originário da teoria dos "multi-armed bandits", busca um equilíbrio entre "exploração" (tentar operadores menos utilizados para descobrir seu potencial) e "aproveitamento" (utilizar operadores que historicamente demonstraram bom desempenho). A escolha de um operador é baseada em um score que combina sua recompensa média observada e um termo que incentiva a exploração de operadores menos testados. A fórmula do score para um operador $i$ é: $\text{score}_i = \bar{R}_i + c \sqrt{\frac{\ln N}{n_i}}$, onde $\bar{R}_i$ é a recompensa média do operador, $N$ é o número total de vezes que qualquer operador foi selecionado, $n_i$ é o número de vezes que o operador $i$ foi selecionado, e $c$ é uma constante que controla o nível de exploração.
+    *   No início do processo, há uma fase de exploração onde todos os operadores são testados algumas vezes.
+    *   Posteriormente, a seleção é guiada pelo score UCB1.
+*   **Definição de Recompensa para Operadores:** A "recompensa" de um operador reflete sua capacidade de gerar soluções melhores:
+    *   Para operadores de **crossover**, a recompensa é tipicamente calculada como a melhoria no makespan do filho gerado em comparação com o makespan do melhor dos pais. Se o filho não for melhor, a recompensa é zero.
+    *   Para operadores de **mutação**, a recompensa é a melhoria no makespan do indivíduo após a aplicação da mutação, em comparação com seu makespan antes da mutação.
+*   **Atualização Dinâmica das Probabilidades de Seleção:**
+    *   Ao final de cada geração do GA, o desempenho (recompensas médias) de cada operador é avaliado. Essas informações são usadas para atualizar uma pontuação para cada operador, frequentemente utilizando uma média móvel exponencial para dar mais peso ao desempenho recente.
+    *   Estas pontuações são então normalizadas para se tornarem probabilidades de seleção para cada operador na próxima geração.
+*   **Mecanismo de Seleção em Tempo de Execução:** Durante a fase de reprodução do GA, quando um operador de crossover ou mutação precisa ser escolhido, a seleção é feita probabilisticamente (por exemplo, usando um método de roleta) com base nas probabilidades adaptativas atuais.
 
-Este mecanismo UCB1 atua como um **orquestrador adaptativo**, melhorando a eficiência do GA ao focar em operadores mais produtivos, sem descartar prematuramente os demais. Uma lógica similar pode ser aplicada na busca local para orquestrar as vizinhanças.
+Este sistema UCB1 funciona como um **orquestrador inteligente** dos operadores genéticos, permitindo que o GA se adapte dinamicamente e utilize com maior frequência os operadores mais eficazes para o estado atual da busca, melhorando a eficiência geral do processo de otimização. Uma abordagem análoga pode ser empregada para a seleção e ordenação de vizinhanças na busca local.
 
-### 5. Busca Local e Estratégias de Vizinhança (`local_search/`)
+### 5. Refinamento por Busca Local (Estratégias de Vizinhança)
 
-A Busca Local de Descida Variável de Vizinhanças (VND) é usada para intensificar a otimização das soluções.
+Para intensificar a busca e refinar as soluções promissoras encontradas pelo Algoritmo Genético, é empregada uma robusta estratégia de Busca Local, primariamente a **Variable Neighborhood Descent (VND)**.
 
-*   **`VNDLocalSearch` (`local_search/strategies.py`):**
-    *   **VND Básico:** Explora sequencialmente um conjunto de estruturas de vizinhança $\{N_1, N_2, \dots, N_k\}$. Ao encontrar uma melhoria, retorna a $N_1$. Se $N_i$ não melhora, tenta $N_{i+1}$.
-    *   **Vizinhanças Utilizadas:** Operadores como swap, inversão, scramble, 2-opt, 3-opt, movimentos de bloco, e movimentos focados no caminho crítico.
-    *   **Ordenação Adaptativa de Vizinhanças:** A ordem das vizinhanças pode ser ajustada dinamicamente com base na taxa de sucesso recente, possivelmente usando UCB1.
-    *   **Shaking de LNS (Large Neighborhood Search):** Se a busca estagnar, uma perturbação grande (embaralhar uma fração do cromossomo) é aplicada para escapar de ótimos locais, seguida por uma nova fase de VND.
-    *   **Busca Local Paralela:** Suporte para avaliação paralela de vizinhos usando multithreading/multiprocessing para acelerar a busca.
+*   **Funcionamento da VND:**
+    *   **Exploração Sistemática de Vizinhanças:** A VND utiliza um conjunto pré-definido de diferentes estruturas de vizinhança (tipos de movimentos que podem ser aplicados a uma solução para gerar vizinhos). O algoritmo tenta melhorar a solução atual aplicando movimentos da primeira estrutura de vizinhança. Se uma melhoria é encontrada, a nova solução é aceita e a busca retorna à primeira estrutura de vizinhança. Se todos os movimentos em uma estrutura de vizinhança são explorados sem melhoria, o algoritmo passa para a próxima estrutura de vizinhança na sequência. Este processo continua até que nenhuma melhoria possa ser encontrada em nenhuma das estruturas de vizinhança.
+    *   **Tipos de Vizinhanças (Operadores de Movimento):** O conjunto de vizinhanças inclui uma variedade de operadores, desde modificações simples até alterações mais complexas na estrutura da solução. Exemplos incluem: trocas de duas operações (Swap), inversão de uma subsequência de operações (Inversion), embaralhamento de uma subsequência (Scramble), movimentos do tipo 2-opt e 3-opt (que revertem ou recombinam segmentos da solução), movimentação de um bloco de operações para outra posição (BlockMove), e troca de posição entre dois blocos de operações (BlockSwap). Alguns movimentos podem ser especificamente projetados para atuar sobre o caminho crítico da solução.
+    *   **Ordenação e Seleção Adaptativa de Vizinhanças:** A ordem em que as estruturas de vizinhança são exploradas pode ser ajustada dinamicamente. Mecanismos baseados na taxa de sucesso recente de cada tipo de vizinhança, potencialmente utilizando um critério similar ao UCB1, podem ser usados para priorizar as vizinhanças que têm se mostrado mais eficazes em encontrar melhorias.
+    *   **Mecanismo de Perturbação (Shaking via Large Neighborhood Search - LNS):** Para evitar que a busca fique presa em ótimos locais de baixa qualidade, uma estratégia de "shaking" pode ser incorporada. Se a VND atinge um ponto onde nenhuma melhoria adicional é encontrada por um período, uma perturbação significativa é aplicada à solução atual (por exemplo, embaralhando uma grande porção do cromossomo). Após esta perturbação (movimento de LNS), a VND é reiniciada a partir da nova solução, diversificando a busca.
+    *   **Suporte à Paralelização:** A avaliação de vizinhos durante a busca local pode ser paralelizada (utilizando multithreading ou multiprocessing) para acelerar o processo, especialmente quando o cálculo da função objetivo para cada vizinho é computacionalmente intensivo.
 
-A busca local VND implementada é sofisticada, combinando a sistemática do VND com elementos reativos (UCB1, LNS) para um refinamento eficaz das soluções.
+A implementação da VND é, portanto, bastante sofisticada, combinando a exploração sistemática de múltiplas vizinhanças com elementos adaptativos e mecanismos para escapar de ótimos locais, o que a torna uma ferramenta poderosa para o refinamento de soluções.
 
 ## Conclusão e Principais Destaques
 
