@@ -47,7 +47,6 @@ class GlobalSolutionPoolPlaceholder:
     def report(self, thread_id: Any, chrom: list, fitness: float):
         with self.lock:
             self.solutions[thread_id] = (list(chrom), fitness)
-            # logger.debug(f"Thread {thread_id} reportou fitness {fitness:.2f}")
 
     def get_best_excluding(self, thread_id: Any) -> Tuple[Optional[list], Optional[float]]:
         with self.lock:
@@ -58,7 +57,6 @@ class GlobalSolutionPoolPlaceholder:
                 if tid != thread_id and fitness < best_fitness:
                     best_fitness = fitness
                     best_chrom = list(chrom)
-            # logger.debug(f"Thread {thread_id} obteve melhor peer: {best_fitness if best_fitness != float('inf') else 'N/A'}")
             return best_chrom, (best_fitness if best_fitness != float('inf') else None)
 
 class VNDLocalSearch(LocalSearchStrategy):
@@ -124,10 +122,33 @@ class VNDLocalSearch(LocalSearchStrategy):
         operadores de rota crítica opcionais e orquestração de vizinhanças UCB1 opcional.
 
         Args:
-            # ... (outros args)
-            max_shake_intensity: Intensidade máxima permitida para o shake
-            enable_multi_phase_shake: Se True, usa shake multi-fase adaptativo
-            critical_ops_ratio: Proporção de operações críticas no shake
+            fitness_func: Função para avaliar o fitness do cromossomo.
+            jobs: Lista de operações por job.
+            num_machines: Número de máquinas.
+            use_advanced_neighborhoods: Se deve incluir 2-opt e 3-opt.
+            max_tries_per_neighborhood: Máximo de vizinhos a avaliar por estrutura (exceto LNS).
+            random_seed: Semente para o gerador de números aleatórios.
+            max_workers: Número de workers paralelos para avaliação de fitness.
+            lns_shake_frequency: Número de iterações VND sem melhoria para acionar o LNS shake.
+            lns_shake_intensity: Proporção (0.0 a 1.0) do cromossomo a ser embaralhada no LNS shake.
+            lns_solver_time_limit: Tempo limite para o solver do LNS.
+            initial_shake_type: Tipo de shake inicial.
+            initial_lns_shake_intensity: Intensidade do LNS shake inicial.
+            use_block_operators: Se deve usar operadores de bloco.
+            use_critical_path_operators: Se deve usar operadores de rota crítica.
+            use_orchestrator: Se deve usar orquestração de vizinhanças UCB1.
+            ucb1_exploration_factor: Fator de exploração para UCB1.
+            orchestrator_initial_attempts: Tentativas iniciais para o orquestrador.
+            orchestrator_initial_reward: Recompensa inicial para o orquestrador.
+            orchestrator_tries_per_pick: Tentativas por pick para o orquestrador.
+            thread_id: ID da "thread" de LS.
+            shared_solution_pool: Pool de soluções compartilhadas.
+            share_frequency: Frequência para compartilhar soluções.
+            reactive_update_N: Frequência para atualização reativa.
+            reactive_learning_eta: Taxa de aprendizado para atualização reativa.
+            max_shake_intensity: Intensidade máxima permitida para o shake.
+            enable_multi_phase_shake: Se True, usa shake multi-fase adaptativo.
+            critical_ops_ratio: Proporção de operações críticas no shake.
         """
         self.fitness_func = fitness_func
         self.jobs_data = jobs
@@ -273,8 +294,6 @@ class VNDLocalSearch(LocalSearchStrategy):
             self.orchestrator.set_rng(self.rng)
             logger.info(
                 f"Orquestrador UCB1 Habilitado com {len(active_neighborhoods)} vizinhanças (c={self.ucb1_exploration_factor}, tries_per_pick={self.orchestrator_tries_per_pick}).")
-        else:
-            logger.info("Usando VND padrão (ordenação por taxa de sucesso).")
 
         # --- Configuração do Hyperparameter UCB para LNS Meta-Adaptação ---
         if self.perform_lns_shake:
@@ -342,13 +361,10 @@ class VNDLocalSearch(LocalSearchStrategy):
             
         indices_to_shake = sorted(indices_to_shake)
         
-        # logger.debug(f"    Aplicando LNS Shake em {num_to_shake} operações nos índices: {indices_to_shake}")
-        
         # Tentar resolver com CP-SAT
         new_chrom = self._apply_cp_sat_to_indices(indices_to_shake, chrom)
         
         if new_chrom != chrom:
-            # logger.debug(f"    LNS Shake: CP-SAT encontrou ordem otimizada.")
             return new_chrom
         
         # Se CP-SAT falhar, usar estratégias alternativas
@@ -390,13 +406,11 @@ class VNDLocalSearch(LocalSearchStrategy):
             except ValueError:
                 continue
         if not valid_insertion_points:
-            # logger.debug(f"Nenhuma posição de inserção válida encontrada para {op_to_move}.")
             return chrom
         chosen_insertion_point_in_original_chrom = self.rng.choice(valid_insertion_points)
         final_temp_chrom = chrom[:current_index] + chrom[current_index+1:]
         final_insert_index_in_temp_chrom = chosen_insertion_point_in_original_chrom - 1 if chosen_insertion_point_in_original_chrom > current_index else chosen_insertion_point_in_original_chrom
         new_chrom = final_temp_chrom[:final_insert_index_in_temp_chrom] + [op_to_move] + final_temp_chrom[final_insert_index_in_temp_chrom:]
-        # logger.debug(f"    Critical Insert: Movi {op_to_move} para índice {chosen_insertion_point_in_original_chrom}.")
         return new_chrom
 
     def _apply_critical_block_swap(self, chrom: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
@@ -431,12 +445,10 @@ class VNDLocalSearch(LocalSearchStrategy):
                         if idx1 is not None and idx2 is not None:
                             possible_swaps.append(tuple(sorted((idx1, idx2))))
         if not possible_swaps:
-            # logger.debug("Nenhuma troca válida de blocos críticos adjacentes encontrada.")
             return chrom
         idx1, idx2 = self.rng.choice(possible_swaps)
         new_chrom = chrom[:]
         new_chrom[idx1], new_chrom[idx2] = new_chrom[idx2], new_chrom[idx1]
-        # logger.debug(f"    Critical Block Swap: Trocou {chrom[idx1]} com {chrom[idx2]}")
         return new_chrom
 
     def _apply_critical_2opt(self, chrom: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
@@ -461,11 +473,9 @@ class VNDLocalSearch(LocalSearchStrategy):
         if start != -1 and len(chrom) - start >= 2:
             critical_blocks.append((start, len(chrom)))
         if not critical_blocks:
-            # logger.debug("Nenhum bloco contíguo de operações críticas (tam >= 2) encontrado.")
             return chrom
         a, b = self.rng.choice(critical_blocks)
         new_chrom = chrom[:a] + list(reversed(chrom[a:b])) + chrom[b:]
-        # logger.debug(f"    Critical 2-opt: Inverteu o bloco crítico [{a}:{b}].")
         return new_chrom
 
     def _apply_critical_lns(self, chrom: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
@@ -568,7 +578,6 @@ class VNDLocalSearch(LocalSearchStrategy):
 
         best_chrom = chromosome[:]
         initial_fitness_calculated = False
-        # MODIFICADO: Cache de fitness (cromossomo_tupla -> valor_fitness)
         evaluated_solutions_cache: Dict[Tuple[Any,...], float] = {}
 
         if self.initial_shake_type:
@@ -663,14 +672,17 @@ class VNDLocalSearch(LocalSearchStrategy):
                         best_chrom = candidate_chrom[:]
                         best_fit = fit
                         improvement_in_iteration = True
-                        reward_for_reactive_update = max(reward_for_reactive_update, previous_fit - best_fit)
+                        # Calcula recompensa percentual
+                        if previous_fit > 1e-9: # Evita divisão por zero e grandes recompensas para fitness perto de zero
+                            reward_for_reactive_update = max(reward_for_reactive_update, (previous_fit - best_fit) / previous_fit)
+                        else:
+                            reward_for_reactive_update = max(reward_for_reactive_update, 0.0) # Ou alguma recompensa pequena se melhorou de um valor muito pequeno
                         improvement_found_in_pick = True
                         self.neighborhood_stats[nh_type]['successes'] += 1
                         break 
                     
                 self.neighborhood_stats[nh_type]['attempts'] += self.orchestrator_tries_per_pick
                 self.orchestrator.update(nh_type, reward_for_reactive_update)
-                # No log de if not improvement_found_in_pick
 
             else: # VND Padrão
                 if not hasattr(self, 'neighborhood_stats') or not self.neighborhood_stats: # Checagem robusta
@@ -803,7 +815,12 @@ class VNDLocalSearch(LocalSearchStrategy):
                                      self.shake_strategy_stats[self.last_shake_type]["successes"] += 1
                             
                             if hasattr(self, 'hyper_orch') and 'arm' in locals(): # Verifica se 'arm' foi definido
-                                reward_shake = max(0.0, prev_best_fit_for_shake_reward - shaken_fit)
+                                reward_shake = 0.0
+                                if prev_best_fit_for_shake_reward > 1e-9: # Evita divisão por zero
+                                    improvement_val = prev_best_fit_for_shake_reward - shaken_fit
+                                    reward_shake = max(0.0, improvement_val / prev_best_fit_for_shake_reward)
+                                elif shaken_fit < prev_best_fit_for_shake_reward: # Se melhorou de um valor muito pequeno/zero
+                                    reward_shake = 1.0 # Recompensa alta por melhorar de zero ou perto de zero
                                 self.hyper_orch.update(arm, reward_shake)
                                     
                             if shaken_fit < best_fit:
@@ -841,8 +858,6 @@ class VNDLocalSearch(LocalSearchStrategy):
 
         end_vnd_time = time.time()
         total_unique_solutions_in_cache = len(evaluated_solutions_cache) 
-        # logger.info(
-        #      f"    [VND Final] Tempo: {end_vnd_time - start_vnd_time:.4f}s | Iters: {vnd_iterations} | Fitness Calcs: ??? | Soluções no Cache: {total_unique_solutions_in_cache} | Melhor Fitness: {best_fit:.2f}")
         return best_chrom
 
     def _get_progressive_shake_intensity(self):
@@ -863,9 +878,6 @@ class VNDLocalSearch(LocalSearchStrategy):
         # A cada 5 shakes sem melhoria, chega à intensidade máxima
         scale_factor = min(1.0, self.consecutive_shakes_without_improvement / 5)
         intensity = base_intensity + (max_intensity - base_intensity) * scale_factor
-        
-        # logger.debug(f"    Intensidade progressiva de shake: {intensity:.3f} " + 
-        #             f"(base: {base_intensity:.3f}, shakes consecutivos: {self.consecutive_shakes_without_improvement})")
         
         return intensity
 
@@ -946,7 +958,6 @@ class VNDLocalSearch(LocalSearchStrategy):
         if strategy is None:
             strategy = self.rng.choice(self.alternative_strategies)
         
-        # logger.debug(f"    Aplicando estratégia alternativa de shake: {strategy}")
         self.shake_strategy_stats["alternative"]["attempts"] += 1
         self.last_shake_type = "alternative"
         
@@ -1039,8 +1050,6 @@ class VNDLocalSearch(LocalSearchStrategy):
         num_to_shake = max(2, int(len(critical_path) * intensity))
         num_critical = min(len(critical_indices), int(num_to_shake * 0.8))
         num_non_critical = min(len(non_critical_indices), num_to_shake - num_critical)
-        
-        # logger.debug(f"    Critical Path Shake: Escolhendo {num_critical} ops críticas e {num_non_critical} não-críticas")
         
         indices_to_shake = []
         if num_critical > 0:
@@ -1230,7 +1239,6 @@ class VNDLocalSearch(LocalSearchStrategy):
                 mini_schedule.operations.sort(key=lambda x: x[3])  # Ordenar por tempo de início
                 cpsat_solution_order = [op_map_mini_to_global[(mini_job_id, mini_op_id)]
                                        for mini_job_id, mini_op_id, _, _, _ in mini_schedule.operations]
-                # logger.debug(f"    CP-SAT encontrou ordem otimizada para {len(indices_to_shake)} operações.")
             else:
                 logger.warning("    CP-SAT não encontrou solução para o subproblema.")
                 return chrom
@@ -1277,36 +1285,55 @@ class NeighborhoodOrchestrator:
         if initial_attempts <= 0:
             raise ValueError("initial_attempts deve ser positivo.")
         self.neighborhoods = list(neighborhoods)
-        self.stats = {n: [float(initial_reward), int(initial_attempts)] for n in self.neighborhoods}
+        # Store [sum_rewards, attempts, sum_squared_rewards]
+        initial_attempts_val = int(initial_attempts)
+        initial_reward_val = float(initial_reward)
+        initial_sum_sq_rewards = (initial_reward_val**2) / initial_attempts_val if initial_attempts_val > 0 else 0.0
+        self.stats = {
+            n: [initial_reward_val, initial_attempts_val, initial_sum_sq_rewards]
+            for n in self.neighborhoods
+        }
         self.total_trials = sum(s[1] for s in self.stats.values())
-        self.c = c
+        self.c = c # Retained for compatibility, but not used by UCB1-Tuned in pick()
         self.rng = random.Random()
         self.operator_probabilities_ref = operator_probabilities_ref # Referência para pesos reativos
         logger.info(
-            f"NeighborhoodOrchestrator inicializado com {len(self.neighborhoods)} vizinhanças, c={self.c}")
+            f"NeighborhoodOrchestrator inicializado com {len(self.neighborhoods)} vizinhanças (UCB1-Tuned).")
 
     def pick(self) -> NeighborhoodType:
         best_neighborhood = None
         max_ucb_score = -float('inf')
         log_total_trials = math.log(max(1, self.total_trials))
+
         for n in self.neighborhoods:
-            sum_rewards, attempts = self.stats[n]
+            sum_rewards, attempts, sum_squared_rewards = self.stats[n]
+
             if attempts == 0:
-                ucb_score = float('inf')
+                ucb_score = float('inf') # Explore unvisited arms first
             else:
                 average_reward = sum_rewards / attempts
-                exploration_bonus = self.c * math.sqrt(log_total_trials / attempts)
+                
+                # Calculate variance for UCB1-Tuned
+                # sample_variance = (sum_squared_rewards / attempts) - (average_reward**2)
+                # Ensure variance is not negative due to potential floating point issues
+                sample_variance = max(0, (sum_squared_rewards / attempts) - (average_reward**2))
+                
+                V_n = sample_variance + math.sqrt((2 * log_total_trials) / attempts)
+                
+                exploration_bonus = math.sqrt((log_total_trials / attempts) * min(0.25, V_n))
                 ucb_value = average_reward + exploration_bonus
-                # Pondera pelo peso reativo, se disponível
+                
                 prob_weight = self.operator_probabilities_ref.get(n, 1.0) if self.operator_probabilities_ref else 1.0
                 ucb_score = ucb_value * prob_weight
+                
             if ucb_score > max_ucb_score:
                 max_ucb_score = ucb_score
                 best_neighborhood = n
-            elif abs(ucb_score - max_ucb_score) < 1e-9 and self.rng.choice([True, False]):
+            elif abs(ucb_score - max_ucb_score) < 1e-9 and self.rng.choice([True, False]): # Tie-breaking
                 best_neighborhood = n
+                
         if best_neighborhood is None:
-            logger.warning("UCB1 não selecionou, escolhendo aleatoriamente.")
+            logger.warning("UCB1-Tuned não selecionou, escolhendo aleatoriamente.")
             best_neighborhood = self.rng.choice(self.neighborhoods)
         return best_neighborhood
 
@@ -1316,6 +1343,7 @@ class NeighborhoodOrchestrator:
             return
         self.stats[neighborhood][0] += reward
         self.stats[neighborhood][1] += 1
+        self.stats[neighborhood][2] += reward**2 # Update sum of squared rewards
         self.total_trials += 1
 
     def set_rng(self, rng_instance: random.Random):

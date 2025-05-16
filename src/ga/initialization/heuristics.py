@@ -1,9 +1,9 @@
 import heapq
 from typing import List, Tuple, Dict
 
-# Tipo para representar uma operação: (job_id, op_id)
+# Tipo para representar uma operação: (job_id, op_id_no_job)
 OpIdentifier = Tuple[int, int]
-# Tipo para dados dos jobs: [[(machine_id, duration), ...], ...]
+# Tipo para dados dos jobs: [[(id_maquina, duracao), ...], ...]
 JobsData = List[List[Tuple[int, int]]]
 
 def _generate_heuristic_chromosome(jobs: JobsData, num_jobs: int, num_machines: int, priority_func: callable) -> List[OpIdentifier]:
@@ -15,10 +15,10 @@ def _generate_heuristic_chromosome(jobs: JobsData, num_jobs: int, num_machines: 
     fornecida (que opera sobre as operações prontas em uma máquina).
 
     Args:
-        jobs: Lista de listas, onde jobs[j][k] é (machine_id, duration) da k-ésima operação do job j.
+        jobs: Lista de listas, onde jobs[j][k] é (id_maquina, duracao) da k-ésima operação do job j.
         num_jobs: Número total de jobs.
         num_machines: Número total de máquinas.
-        priority_func: Função que recebe (machine_id, duration, job_id, op_id) e retorna
+        priority_func: Função que recebe (id_maquina, duracao, job_id, op_id) e retorna
                        um valor numérico para priorização (menor valor = maior prioridade).
 
     Returns:
@@ -28,13 +28,15 @@ def _generate_heuristic_chromosome(jobs: JobsData, num_jobs: int, num_machines: 
     num_total_ops = sum(len(job) for job in jobs)
 
     # Estado do agendamento
-    machine_available_time = [0] * num_machines
+    machine_available_time = [0] * num_machines # Tempo em que cada máquina estará disponível
     job_next_op_idx = [0] * num_jobs # Índice da próxima operação a ser agendada para cada job
-    job_completion_time = [0] * num_jobs # Tempo de conclusão da última op agendada do job
+    job_completion_time = [0] * num_jobs # Tempo de conclusão da última operação agendada do job
 
-    # Operações prontas para serem agendadas (índice 0 de cada job inicialmente)
-    ready_heap: List[Tuple[float, int, int]] = [] # (priority_value, job_id, op_id)
-    ops_details: Dict[OpIdentifier, Tuple[int, int]] = {} # (job_id, op_id) -> (machine_id, duration)
+    # Operações prontas para serem agendadas
+    # (valor_prioridade, job_id, op_id)
+    ready_heap: List[Tuple[float, int, int]] = [] 
+    # (job_id, op_id) -> (id_maquina, duracao)
+    ops_details: Dict[OpIdentifier, Tuple[int, int]] = {} 
 
     # Inicializa com a primeira operação de cada job
     for j in range(num_jobs):
@@ -48,17 +50,13 @@ def _generate_heuristic_chromosome(jobs: JobsData, num_jobs: int, num_machines: 
     scheduled_ops_count = 0
     while scheduled_ops_count < num_total_ops:
         if not ready_heap:
-            # Isso não deveria acontecer em um JSSP válido se nem todas as ops foram agendadas
-            # Pode indicar um problema ou um deadlock teórico (improvável com heurísticas simples)
-            print("Warning: Heurística ficou sem operações prontas antes de concluir.")
+            # Isso não deveria acontecer em um JSSP válido se nem todas as ops foram agendadas.
+            print("Aviso: Heurística ficou sem operações prontas antes de concluir.")
             break
 
-        # Encontra a operação pronta de maior prioridade cuja máquina esteja disponível mais cedo
-        # Isso requer iterar ou uma estrutura mais complexa. Vamos simplificar:
-        # Pegamos a de maior prioridade geral (menor valor) e agendamos na sua máquina
-        # assim que a máquina E o job estiverem prontos.
+        # Para simplificar, pegamos a de maior prioridade geral (menor valor)
+        # e agendamos na sua máquina assim que a máquina E o job estiverem prontos.
 
-        # Usamos um loop para encontrar a melhor *agendável* no topo da heap
         best_op_to_schedule = None
         temp_rejected = [] # Guarda temporariamente ops cuja máquina/job não está pronto
 
@@ -70,14 +68,13 @@ def _generate_heuristic_chromosome(jobs: JobsData, num_jobs: int, num_machines: 
             start_time = max(machine_available_time[machine_id], job_completion_time[job_id])
             completion_time = start_time + duration
 
-            # "Agendamos" a operação
             best_op_to_schedule = (job_id, op_id)
             chromosome.append(best_op_to_schedule)
             scheduled_ops_count += 1
 
             # Atualiza tempos
             machine_available_time[machine_id] = completion_time
-            job_completion_time[job_id] = completion_time # Tempo de conclusão desta operação
+            job_completion_time[job_id] = completion_time
 
             # Libera a próxima operação do mesmo job, se houver
             next_op_id = op_id + 1
@@ -85,7 +82,6 @@ def _generate_heuristic_chromosome(jobs: JobsData, num_jobs: int, num_machines: 
                 next_machine_id, next_duration = jobs[job_id][next_op_id]
                 ops_details[(job_id, next_op_id)] = (next_machine_id, next_duration)
                 next_priority_val = priority_func(next_machine_id, next_duration, job_id, next_op_id)
-                # Adiciona à heap de prontas (será considerada nas próximas iterações)
                 heapq.heappush(ready_heap, (next_priority_val, job_id, next_op_id))
 
             # Coloca de volta as operações temporariamente rejeitadas
@@ -94,23 +90,16 @@ def _generate_heuristic_chromosome(jobs: JobsData, num_jobs: int, num_machines: 
 
             break # Achamos uma operação para agendar nesta iteração
 
-        # Se saímos do while interno sem agendar (best_op_to_schedule is None), algo deu errado.
         if best_op_to_schedule is None and ready_heap:
-             # Isso pode acontecer se a implementação da prioridade/heap for sutilmente complexa.
-             # Por simplicidade, vamos assumir que sempre encontraremos uma.
-             print("Warning: Loop interno da heurística não encontrou operação agendável.")
-             # Poderia pegar a primeira da heap e forçar, mas vamos parar por segurança.
+             print("Aviso: Loop interno da heurística não encontrou operação agendável.")
              break
         elif not ready_heap and scheduled_ops_count < num_total_ops:
-             print("Error: Heap vazia mas nem todas as operações foram agendadas.")
+             print("Erro: Heap vazia mas nem todas as operações foram agendadas.")
              break
 
-
     if scheduled_ops_count != num_total_ops:
-         print(f"Error: Heurística gerou cromossomo incompleto ({scheduled_ops_count}/{num_total_ops} ops).")
-         # Retornar cromossomo parcial ou None? Retornar parcial pode causar erros depois.
-         # Melhor retornar None ou lista vazia para indicar falha.
-         return []
+         print(f"Erro: Heurística gerou cromossomo incompleto ({scheduled_ops_count}/{num_total_ops} ops).")
+         return [] # Retorna lista vazia para indicar falha
 
     return chromosome
 
@@ -136,11 +125,8 @@ def generate_lpt_chromosome(jobs: JobsData, num_jobs: int, num_machines: int) ->
     print("Gerando cromossomo inicial com heurística LPT...")
     return _generate_heuristic_chromosome(jobs, num_jobs, num_machines, lpt_priority)
 
-# Adicionar mais heurísticas aqui se necessário (ex: FIFO, LIFO, etc.)
-# Exemplo FIFO (baseado no Job ID, depois Op ID)
 def fifo_priority(_machine_id: int, _duration: int, job_id: int, op_id: int) -> Tuple[int, int]:
-    """Prioridade FIFO: Menor Job ID, depois menor Op ID."""
-    # Retorna tupla para desempate
+    """Prioridade FIFO: Menor Job ID, depois menor Op ID (menor valor = maior prioridade)."""
     return (job_id, op_id)
 
 def generate_fifo_chromosome(jobs: JobsData, num_jobs: int, num_machines: int) -> List[OpIdentifier]:

@@ -9,10 +9,10 @@ from .genetic_operators.base import CrossoverStrategy, MutationStrategy, LocalSe
 # Crossover
 from .genetic_operators.crossover import OrderCrossover, PMXCrossover, CycleCrossover, PositionBasedCrossover, DisjunctiveCrossover
 
-# Mutation
+# Mutação
 from .genetic_operators.mutation import StandardMutation, DisjunctiveMutation
 
-# Local Search
+# Busca Local
 # from local_search.strategies import VNDLocalSearch # VND é importado onde necessário, não aqui
 
 # Classes auxiliares (Removidas pois não existem ou não são usadas aqui)

@@ -58,28 +58,28 @@ class DisjunctiveMutation(MutationStrategy):
 
         return mutated
 
-# --- Critical Path Based Mutations ---
+# --- Mutações Baseadas no Caminho Crítico ---
 
 class CriticalPathMutationBase(MutationStrategy):
-    """Base class for mutations needing the critical path."""
+    """Classe base para mutações que necessitam do caminho crítico."""
     def _get_graph_and_critical_path(self, chromosome, graph_builder, op_durations, **kwargs):
-        """Helper to build graph and get critical path."""
+        """Função auxiliar para construir o grafo e obter o caminho crítico."""
         if graph_builder is None:
             print("Error: graph_builder is required for critical path mutation.")
             return None, None, None
         try:
-            # Assumes graph_builder needs only chromosome (and optionally use_dsu=False)
-            graph = graph_builder(chromosome, use_dsu=False) # DSU might interfere with graph structure needed here
+            # Assume que graph_builder precisa apenas do cromossomo (e opcionalmente use_dsu=False)
+            graph = graph_builder(chromosome, use_dsu=False) # DSU pode interferir com a estrutura do grafo necessária aqui
             critical_path_nodes = graph.get_critical_path(op_durations)
             if not critical_path_nodes:
-                return graph, None, None # Return graph even if path is empty
+                return graph, None, None # Retorna o grafo mesmo que o caminho esteja vazio
             return graph, critical_path_nodes, graph.num_ops
         except Exception as e:
             print(f"Error building graph or getting critical path: {e}")
             return None, None, None
 
     def _get_op_durations_map(self, chromosome, jobs):
-         """Creates a map from graph node index to duration."""
+         """Cria um mapa do índice do nó do grafo para a duração."""
          op_to_idx = {op: idx for idx, op in enumerate(chromosome)}
          durations_map = {}
          for job_id, job_ops in enumerate(jobs):
@@ -88,15 +88,13 @@ class CriticalPathMutationBase(MutationStrategy):
                  if op_tuple in op_to_idx:
                      graph_idx = op_to_idx[op_tuple]
                      durations_map[graph_idx] = duration
-                 # else: # Should not happen if chromosome is valid
-                 #     print(f"Warning: Operation {op_tuple} not found in chromosome map.")
          return durations_map
 
 class CriticalPathSwap(CriticalPathMutationBase):
-    """Swaps two adjacent operations on the critical path."""
+    """Troca duas operações adjacentes no caminho crítico."""
     def mutate(self, chromosome, graph_builder=None, jobs=None, **kwargs):
         if graph_builder is None or jobs is None:
-            # Fallback to standard if needed info is missing
+            # Recorre à mutação padrão se informações necessárias estiverem faltando
             standard_mutation = StandardMutation()
             if hasattr(self, 'local_search_strategy'):
                  standard_mutation.local_search_strategy = self.local_search_strategy
@@ -116,19 +114,19 @@ class CriticalPathSwap(CriticalPathMutationBase):
             u_idx = critical_path_nodes[i]
             v_idx = critical_path_nodes[i+1]
             if v_idx in graph.adj.get(u_idx, set()):
-                # Initialize flags for edge type for this iteration
+                # Inicializa flags para o tipo de aresta para esta iteração
                 is_job_edge = False
                 is_machine_edge = False
 
                 u_op = graph.idx_to_op[u_idx]
                 v_op = graph.idx_to_op[v_idx]
 
-                if u_op[0] == v_op[0]: # Same job -> job precedence
+                if u_op[0] == v_op[0]: # Mesmo job -> precedência de job
                     is_job_edge = True
-                else: # Different job -> must be machine precedence
+                else: # Job diferente -> deve ser precedência de máquina
                     is_machine_edge = True
 
-                # We can only swap if it's a MACHINE precedence edge
+                # Só podemos trocar se for uma aresta de precedência de MÁQUINA
                 if is_machine_edge:
                     candidates.append((u_idx, v_idx))
 
@@ -140,22 +138,22 @@ class CriticalPathSwap(CriticalPathMutationBase):
 
         u_graph_idx, v_graph_idx = random.choice(candidates)
 
-        # Get the corresponding (job, op) tuples using graph's map
-        # We now assume graph_builder adds this map to the graph object.
+        # Obtém as tuplas (job, op) correspondentes usando o mapa do grafo
+        # Agora assumimos que graph_builder adiciona este mapa ao objeto do grafo.
         if not hasattr(graph, 'idx_to_op'):
-            # Fallback or error if the builder didn't add the map
+            # Recorrer ao padrão ou erro se o construtor não adicionou o mapa
             print("Error: graph object missing 'idx_to_op' attribute in CriticalPathSwap. Building manually.")
-            # Build it manually as a fallback - this shouldn't happen now
+            # Constrói manualmente como um fallback - isso não deveria acontecer agora
             idx_to_op = {idx: op for idx, op in enumerate(chromosome)}
         else:
              idx_to_op = graph.idx_to_op
 
         try:
-             u_op = idx_to_op[u_graph_idx] # The op that came first on the machine
-             v_op = idx_to_op[v_graph_idx] # The op that came second on the machine
+             u_op = idx_to_op[u_graph_idx] # A operação que veio primeiro na máquina
+             v_op = idx_to_op[v_graph_idx] # A operação que veio segunda na máquina
         except KeyError:
              print(f"Error: Graph index {u_graph_idx} or {v_graph_idx} not found in idx_to_op map.")
-             return chromosome # Return original chromosome
+             return chromosome # Retorna o cromossomo original
 
         if has_path_in_job_graph(v_op, u_op, jobs):
             return chromosome
@@ -175,6 +173,6 @@ class CriticalPathSwap(CriticalPathMutationBase):
 
         return mutated
 
-# TODO: Implement CriticalPathInsert and CriticalPath2Opt following similar patterns
-# - CriticalPathInsert: Select critical node, find valid insertion points, insert, check cycle.
-# - CriticalPath2Opt: Select segment of critical path, reverse it, check cycle.
+# TODO: Implementar CriticalPathInsert e CriticalPath2Opt seguindo padrões similares
+# - CriticalPathInsert: Selecionar nó crítico, encontrar pontos de inserção válidos, inserir, verificar ciclo.
+# - CriticalPath2Opt: Selecionar segmento do caminho crítico, revertê-lo, verificar ciclo.

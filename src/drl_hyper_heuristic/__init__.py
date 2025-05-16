@@ -1,1 +1,0 @@
-# Arquivo de inicialização para o módulo drl_hyper_heuristic 

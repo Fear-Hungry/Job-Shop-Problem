@@ -5,14 +5,16 @@ from .dsu import DSU
 class DisjunctiveGraph:
     def __init__(self, num_ops, use_dsu=False):
         self.num_ops = num_ops
-        self.adj = {i: set() for i in range(num_ops)}  # arestas dirigidas
-        self.rev_adj = {i: set() for i in range(num_ops)}
+        self.adj = {i: set() for i in range(num_ops)}  # Arestas direcionadas
+        self.rev_adj = {i: set() for i in range(num_ops)} # Arestas reversas para facilitar o cálculo do grau de entrada
         self.use_dsu = use_dsu
         self.dsu = DSU(num_ops) if use_dsu else None
 
     def add_edge(self, u, v):
+        # Se DSU estiver em uso, verifica se a adição da aresta cria um ciclo.
+        # A união retorna False se u e v já estão no mesmo conjunto (ciclo).
         if self.dsu is not None and not self.dsu.union(u, v):
-            return False
+            return False  # Aresta formaria um ciclo
         self.adj[u].add(v)
         self.rev_adj[v].add(u)
         return True
@@ -21,152 +23,185 @@ class DisjunctiveGraph:
         self.adj[u].discard(v)
         self.rev_adj[v].discard(u)
 
-        # Se DSU estiver em uso, reinicializa e reconstrói
+        # Se DSU estiver em uso, precisa ser reinicializado e reconstruído,
+        # pois a remoção de uma aresta pode separar componentes.
         if self.dsu is not None:
             self.dsu = DSU(self.num_ops)
             for curr_u in self.adj:
                 for curr_v in self.adj[curr_u]:
                     # Ignora o resultado da união aqui, pois estamos reconstruindo
-                    # com base em arestas que já foram validadas
-                    self.dsu.union(curr_u, curr_v)
+                    # com base em arestas que já foram validadas como não formando ciclo
+                    # no momento de sua adição original (ou o ciclo foi permitido e tratado por has_cycle).
+                    self.dsu.union(curr_u, curr_v) # Apenas para reconstruir os conjuntos
 
     def has_cycle(self):
         visited = set()
-        stack = set()
+        stack = set() # Pilha de recursão para nós atualmente no caminho de visita
 
         def visit(v):
-            if v in stack:
+            if v in stack: # Se o nó já está na pilha de recursão, encontramos um ciclo
                 return True
-            if v in visited:
+            if v in visited: # Se já visitado e não na pilha, não há ciclo a partir daqui
                 return False
+            
             visited.add(v)
             stack.add(v)
-            for w in self.adj[v]:
+            
+            for w in self.adj.get(v, []): # Itera sobre vizinhos
                 if visit(w):
                     return True
-            stack.remove(v)
+            
+            stack.remove(v) # Remove da pilha de recursão ao retroceder
             return False
-        return any(visit(v) for v in range(self.num_ops))
+
+        # Verifica ciclos a partir de todos os nós não visitados
+        for v_node in range(self.num_ops):
+            if v_node not in visited:
+                if visit(v_node):
+                    return True
+        return False
 
     def topological_sort(self):
         in_degree = {i: len(self.rev_adj[i]) for i in range(self.num_ops)}
         queue = collections.deque([i for i in range(self.num_ops) if in_degree[i] == 0])
         order = []
+        
         while queue:
             v = queue.popleft()
             order.append(v)
-            for w in self.adj[v]:
+            for w in self.adj.get(v, []):
                 in_degree[w] -= 1
                 if in_degree[w] == 0:
                     queue.append(w)
+        
         if len(order) != self.num_ops:
-            raise ValueError('Grafo contém ciclo!')
+            # Se a ordenação topológica não inclui todos os nós, há um ciclo.
+            raise ValueError("Grafo contém um ciclo, ordenação topológica impossível.")
         return order
 
     def get_makespan(self, op_durations):
         """
-        Calculates the makespan (length of the longest path) of the graph.
+        Calcula o makespan (comprimento do caminho mais longo) do grafo.
 
         Args:
-            op_durations (dict or list): A mapping from operation index (node) 
-                                         to its duration.
+            op_durations (dict ou list): Um mapeamento do índice da operação (nó)
+                                         para sua duração.
 
         Returns:
-            float: The makespan, or float('inf') if the graph contains a cycle.
+            float: O makespan, ou float('inf') se o grafo contiver um ciclo.
         """
+        # Primeiro, verificamos explicitamente se há ciclo, pois a ordenação topológica
+        # também pode lançar um erro, mas esta verificação é mais direta para o makespan.
         if self.has_cycle(): 
             return float('inf')
 
         try:
             topological_order = self.topological_sort()
-        except ValueError: # Cycle detected by topological_sort
+        except ValueError: # Ciclo detectado pela ordenação topológica
             return float('inf')
 
-        ef = {op_idx: 0 for op_idx in range(self.num_ops)} # Earliest Finish times
+        # ef (Earliest Finish times) - Tempo mais cedo de finalização
+        ef = {op_idx: 0 for op_idx in range(self.num_ops)} 
 
         for op_idx in topological_order:
-            # Determine current operation's duration
             current_op_duration = 0
             if isinstance(op_durations, dict):
                 current_op_duration = op_durations.get(op_idx, 0)
             elif isinstance(op_durations, list):
-                 # Ensure index is within bounds
-                 if 0 <= op_idx < len(op_durations):
+                 if 0 <= op_idx < len(op_durations): # Garante que o índice está dentro dos limites
                      current_op_duration = op_durations[op_idx]
             
-            # Calculate Earliest Start (max EF of predecessors)
+            # Calcula o Tempo Mais Cedo de Início (ES) como o máximo EF dos predecessores
             max_ef_preds = 0
+            # Verifica se op_idx existe em rev_adj e tem predecessores
             if op_idx in self.rev_adj:
                  for pred_idx in self.rev_adj[op_idx]:
-                      max_ef_preds = max(max_ef_preds, ef.get(pred_idx, 0))
+                      max_ef_preds = max(max_ef_preds, ef.get(pred_idx, 0)) # Usa ef.get para segurança
             
-            # Calculate Earliest Finish
+            # Calcula o Tempo Mais Cedo de Finalização (EF)
             ef[op_idx] = max_ef_preds + current_op_duration
 
-        # Makespan is the maximum EF of all operations
+        # O Makespan é o máximo EF de todas as operações
         makespan = 0.0
-        if ef:
-            makespan = max(ef.values())
+        if ef: # Garante que ef não está vazio
+            makespan = max(ef.values()) if ef else 0.0 # Adicionado if ef else 0.0 para robustez
         
         return makespan
 
     def get_critical_path(self, op_durations):
         """
-        Calculates the critical path in the disjunctive graph.
+        Calcula o caminho crítico no grafo disjuntivo.
 
         Args:
-            op_durations (dict or list): A mapping from operation index (node in graph)
-                                         to its duration. If it's a list, the index
-                                         is the operation index.
+            op_durations (dict ou list): Mapeamento do índice da operação (nó no grafo)
+                                         para sua duração. Se for uma lista, o índice
+                                         é o índice da operação.
 
         Returns:
-            list[int]: A list of operation indices (nodes) forming a critical path.
-                       Returns an empty list if the graph has a cycle or other issues.
+            list[int]: Uma lista de índices de operações (nós) formando um caminho crítico.
+                       Retorna uma lista vazia se o grafo tiver um ciclo ou outros problemas.
         """
-        if self.has_cycle(): # Ensure graph is a DAG
+        if self.has_cycle(): # Garante que o grafo é um DAG
             return []
 
-        es = {op_idx: 0 for op_idx in range(self.num_ops)}
-        ef = {op_idx: 0 for op_idx in range(self.num_ops)}
+        es = {op_idx: 0 for op_idx in range(self.num_ops)} # Earliest Start
+        ef = {op_idx: 0 for op_idx in range(self.num_ops)} # Earliest Finish
         
         try:
             topological_order = self.topological_sort()
-        except ValueError: # Cycle detected by topological_sort
+        except ValueError: # Ciclo detectado
             return []
 
+        # Calcula ES e EF
         for op_idx in topological_order:
-            current_op_duration = op_durations[op_idx] if isinstance(op_durations, list) else op_durations.get(op_idx, 0)
-            # ES is max EF of predecessors
+            # Determina a duração da operação atual
+            current_op_duration = 0
+            if isinstance(op_durations, dict):
+                current_op_duration = op_durations.get(op_idx, 0)
+            elif isinstance(op_durations, list) and 0 <= op_idx < len(op_durations):
+                current_op_duration = op_durations[op_idx]
+            
+            # ES é o máximo EF dos predecessores
             max_ef_preds = 0
-            if op_idx in self.rev_adj: # Check if op_idx has predecessors
+            if op_idx in self.rev_adj: 
                  for pred_idx in self.rev_adj[op_idx]:
-                      max_ef_preds = max(max_ef_preds, ef[pred_idx])
+                      max_ef_preds = max(max_ef_preds, ef.get(pred_idx,0)) # ef[pred_idx] já calculado
             es[op_idx] = max_ef_preds
             ef[op_idx] = es[op_idx] + current_op_duration
 
-        makespan = 0
-        for op_idx in range(self.num_ops):
-            makespan = max(makespan, ef[op_idx])
+        # Calcula o makespan (EF máximo)
+        makespan = 0.0
+        if ef: # Garante que ef não está vazio
+            makespan = max(ef.values()) if ef else 0.0
 
-        ls = {op_idx: makespan for op_idx in range(self.num_ops)}
-        lf = {op_idx: makespan for op_idx in range(self.num_ops)}
+        ls = {op_idx: makespan for op_idx in range(self.num_ops)} # Latest Start
+        lf = {op_idx: makespan for op_idx in range(self.num_ops)} # Latest Finish
 
+        # Calcula LS e LF na ordem topológica reversa
         for op_idx in reversed(topological_order):
-            current_op_duration = op_durations[op_idx] if isinstance(op_durations, list) else op_durations.get(op_idx, 0)
-            # LF is min LS of successors
-            min_ls_succs = makespan
-            if op_idx in self.adj: # Check if op_idx has successors
-                if self.adj[op_idx]:
-                    min_ls_succs_for_op = float('inf') # Initialize for this specific op
-                    for succ_idx in self.adj[op_idx]:
-                        min_ls_succs_for_op = min(min_ls_succs_for_op, ls[succ_idx])
-                    min_ls_succs = min_ls_succs_for_op # Assign if successors were found
+            current_op_duration = 0
+            if isinstance(op_durations, dict):
+                current_op_duration = op_durations.get(op_idx, 0)
+            elif isinstance(op_durations, list) and 0 <= op_idx < len(op_durations):
+                current_op_duration = op_durations[op_idx]
 
+            # LF é o mínimo LS dos sucessores
+            min_ls_succs = makespan # Default se não houver sucessores
+            # Verifica se op_idx tem sucessores em self.adj
+            if op_idx in self.adj and self.adj[op_idx]:
+                min_ls_succs_for_op = float('inf') 
+                for succ_idx in self.adj[op_idx]:
+                    min_ls_succs_for_op = min(min_ls_succs_for_op, ls.get(succ_idx, makespan)) # ls[succ_idx] já calculado
+                min_ls_succs = min_ls_succs_for_op
+            
             lf[op_idx] = min_ls_succs
             ls[op_idx] = lf[op_idx] - current_op_duration
             
         critical_path = []
-        for op_idx in topological_order: # Iterate in topological order for a structured path
+        # Operações no caminho crítico têm ES == LS (ou EF == LF)
+        # Iterar na ordem topológica para um caminho estruturado
+        for op_idx in topological_order: 
+            # Usar uma pequena tolerância para comparações de float
             if abs(es[op_idx] - ls[op_idx]) < 1e-6: 
                 critical_path.append(op_idx)
 

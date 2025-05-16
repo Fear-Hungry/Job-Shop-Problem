@@ -13,10 +13,10 @@ class PopulationInitializer:
         Inicializa o inicializador de população.
 
         Args:
-            jobs: Lista de jobs com suas operações
-            num_jobs: Número de jobs
-            num_machines: Número de máquinas
-            fitness_func: Função para calcular o fitness de um cromossomo
+            jobs: Lista de jobs com suas operações.
+            num_jobs: Número de jobs.
+            num_machines: Número de máquinas.
+            fitness_func: Função para calcular o fitness de um cromossomo.
         """
         self.jobs = jobs
         self.num_jobs = num_jobs
@@ -28,11 +28,11 @@ class PopulationInitializer:
         Inicializa a população, usando CP-SAT se disponível ou heurísticas.
 
         Args:
-            population_size: Tamanho da população
-            initial_schedule: Schedule inicial para ser incluído na população
+            population_size: Tamanho da população.
+            initial_schedule: Escalonamento inicial para ser incluído na população (opcional).
 
         Returns:
-            Lista de indivíduos (dicionários com chave 'chromosome')
+            Lista de indivíduos (dicionários com chave 'chromosome').
         """
         population = []
         initial_chromosomes = set()  # Para evitar duplicatas exatas na inicialização
@@ -41,7 +41,7 @@ class PopulationInitializer:
         best_initial_chromosome = None
         best_initial_fitness = float('inf')
 
-        # Se houver um schedule inicial fornecido
+        # Se houver um escalonamento inicial fornecido
         if initial_schedule:
             chrom = tuple([(op[0], op[1])
                           for op in initial_schedule.operations])
@@ -55,9 +55,9 @@ class PopulationInitializer:
                     best_initial_chromosome = chrom
             else:
                 print(
-                    "Aviso: Schedule inicial fornecido parece inválido (tamanho incorreto?). Ignorando.")
+                    "Aviso: Escalonamento inicial fornecido parece inválido (tamanho incorreto?). Ignorando.")
 
-        # Se não houver schedule inicial ou for inválido, tenta gerar um com CP-SAT
+        # Se não houver escalonamento inicial ou for inválido, tenta gerar um com CP-SAT
         if not best_initial_chromosome:
             try:
                 # Roda CP-SAT com um limite de tempo curto
@@ -78,7 +78,7 @@ class PopulationInitializer:
                             best_initial_chromosome = chrom
                     else:
                         print(
-                            "Aviso: Schedule do CP-SAT parece inválido (tamanho incorreto?).")
+                            "Aviso: Escalonamento do CP-SAT parece inválido (tamanho incorreto?).")
 
             except Exception as e:
                 print(f"Erro ao executar CP-SAT para solução inicial: {e}")

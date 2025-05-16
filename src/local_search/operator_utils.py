@@ -5,7 +5,6 @@ logger = logging.getLogger(__name__)
 
 def calculate_schedule_and_critical_path(
     chrom: list, 
-    # jobs_data: List[List[Tuple[int, int]]], # Não mais necessário diretamente
     num_machines: int,
     op_details: Dict[Tuple[int, int], Tuple[int, int]], # (job_id, op_id) -> (machine_id, duration)
     job_predecessors: Dict[Tuple[int, int], Tuple[int, int]] # (job_id, op_id) -> (job_id, op_id-1)
@@ -28,18 +27,8 @@ def calculate_schedule_and_critical_path(
     if not chrom:
         return {}, [], 0.0
 
-    # num_total_ops = len(chrom) # Não usado
     completion_times = {}  # (job_id, op_id) -> end_time
 
-    # op_details e job_predecessors são agora passados como argumentos
-    # op_details = {(j, i): jobs_data[j][i] for j, job in enumerate(jobs_data) for i in range(len(job))}
-    # job_predecessors = {}
-    # for j, job in enumerate(jobs_data):
-    #     for i in range(len(job)):
-    #         if i > 0:
-    #             job_predecessors[(j, i)] = (j, i - 1)
-
-    machine_release_times = {m: 0.0 for m in range(num_machines)} # Não usado diretamente, mas last_machine_op cumpre um papel similar
     machine_op_predecessors = {} # Armazena o predecessor real na máquina na sequência `chrom`
     last_machine_op: Dict[int, Tuple[int, int]] = {} # Mantém a última operação agendada em cada máquina
     

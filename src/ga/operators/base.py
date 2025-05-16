@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 class CrossoverStrategy(ABC):
     @abstractmethod
     def crossover(self, parent1, parent2, **kwargs):
-        """Realiza o crossover entre dois pais para gerar um ou mais filhos."""
+        """Realiza o cruzamento entre dois pais para gerar um ou mais filhos."""
         pass
 
 # Estratégia de Mutação Base

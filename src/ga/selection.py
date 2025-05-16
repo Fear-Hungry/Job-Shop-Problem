@@ -13,12 +13,12 @@ class SelectionOperator:
         Realiza a seleção por torneio.
 
         Args:
-            population: Lista de indivíduos
-            fitnesses: Lista de valores de fitness para cada indivíduo
-            tournament_size: Tamanho do torneio
+            population: Lista de indivíduos.
+            fitnesses: Lista de valores de fitness para cada indivíduo.
+            tournament_size: Tamanho do torneio.
 
         Returns:
-            Lista de indivíduos selecionados
+            Lista de indivíduos selecionados.
         """
         selected = []
         pop_indices = list(range(len(population)))
@@ -41,14 +41,14 @@ class SelectionOperator:
         Realiza a seleção por roleta. Para problemas de minimização, inverte o fitness.
 
         Args:
-            population: Lista de indivíduos
-            fitnesses: Lista de valores de fitness para cada indivíduo
+            population: Lista de indivíduos.
+            fitnesses: Lista de valores de fitness para cada indivíduo.
 
         Returns:
-            Lista de indivíduos selecionados
+            Lista de indivíduos selecionados.
         """
-        # Como o fitness é um makespan (menor é melhor), calculamos o inverso
-        # Adiciona um pequeno epsilon para evitar divisão por zero
+        # Como o fitness é um makespan (menor é melhor), calculamos o inverso.
+        # Adiciona um pequeno epsilon para evitar divisão por zero.
         epsilon = 1e-10
         inverse_fitnesses = [1.0 / (fit + epsilon) for fit in fitnesses]
 
@@ -74,23 +74,33 @@ class SelectionOperator:
         Realiza a seleção por ranking.
 
         Args:
-            population: Lista de indivíduos
-            fitnesses: Lista de valores de fitness para cada indivíduo
+            population: Lista de indivíduos.
+            fitnesses: Lista de valores de fitness para cada indivíduo.
 
         Returns:
-            Lista de indivíduos selecionados
+            Lista de indivíduos selecionados.
         """
         # Ordena os índices da população pelo fitness (menor para maior)
         ranked_indices = sorted(range(len(fitnesses)),
                                 key=lambda i: fitnesses[i])
 
-        # Atribui um rank a cada indivíduo (o melhor tem o maior rank)
-        ranks = [0] * len(population)
-        for rank, idx in enumerate(ranked_indices):
-            ranks[idx] = rank + 1  # Rank começa em 1
+        # Atribui um rank a cada indivíduo (o melhor tem o maior rank, mas aqui menor fitness = melhor rank)
+        # Para manter a lógica de que maior rank é melhor para seleção, invertemos a atribuição.
+        # Ou, mais simples, o menor fitness recebe rank 1, o segundo menor rank 2, etc.
+        # E a probabilidade é proporcional ao inverso do rank (ou (N - rank + 1)).
+        # Vamos usar a abordagem onde o melhor (menor fitness) recebe o maior peso/rank.
+        num_individuals = len(population)
+        ranks = [0] * num_individuals
+        # O indivíduo com menor fitness (melhor) recebe rank `num_individuals`,
+        # o segundo melhor recebe `num_individuals - 1`, e assim por diante.
+        for i, original_idx in enumerate(ranked_indices):
+            ranks[original_idx] = num_individuals - i # Maior rank para o melhor fitness
 
         # Calcula a soma dos ranks
         total_rank = sum(ranks)
+        if total_rank == 0: # Evita divisão por zero se todos os ranks forem 0 (improvável)
+            # Fallback: seleção aleatória ou erro
+            return [copy.deepcopy(random.choice(population)) for _ in range(len(population))]
 
         # Calcula as probabilidades de seleção (proporcional ao rank)
         probabilities = [rank / total_rank for rank in ranks]
@@ -111,13 +121,13 @@ class SelectionOperator:
         Realiza a seleção com elitismo.
 
         Args:
-            population: Lista de indivíduos
-            fitnesses: Lista de valores de fitness para cada indivíduo
-            elite_size: Número de indivíduos de elite a manter
-            rest_selection_func: Função de seleção para o restante da população
+            population: Lista de indivíduos.
+            fitnesses: Lista de valores de fitness para cada indivíduo.
+            elite_size: Número de indivíduos de elite a manter.
+            rest_selection_func: Função de seleção para o restante da população.
 
         Returns:
-            Lista de indivíduos selecionados
+            Lista de indivíduos selecionados.
         """
         # Encontra os índices dos indivíduos com melhor fitness (menor makespan)
         elite_indices = sorted(range(len(fitnesses)),
@@ -133,11 +143,15 @@ class SelectionOperator:
             fitnesses) if i not in elite_indices]
 
         # Seleciona o restante usando a função de seleção fornecida
-        remaining_selected = rest_selection_func(
-            remaining_population, remaining_fitnesses)
+        # Garante que não tentamos selecionar de uma população vazia se elite_size == len(population)
+        remaining_selected = []
+        if remaining_population: # Apenas chama se houver indivíduos restantes
+            remaining_selected = rest_selection_func(
+                remaining_population, remaining_fitnesses)
 
         # Seleciona apenas o número necessário para completar a população
         num_remaining_needed = len(population) - elite_size
+        # Garante que não tentamos pegar mais do que foi selecionado
         remaining_selected = remaining_selected[:num_remaining_needed]
 
         # Combina os elite com o restante selecionado
