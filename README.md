@@ -39,14 +39,14 @@ O diagrama abaixo ilustra o fluxo principal do processo de solução implementad
 
 ```mermaid
 graph TD
-    A[Início: Leitura da Instância do JSSP] --> B{Solver CP-SAT};
-    B -- Solução Inicial de Alta Qualidade --> C[Algoritmo Genético (GA)];
-    B -- Timeout/Sem Solução --> D[Heurísticas de Inicialização (ex: SPT)];
-    D --> C;
-    C -- Seleção Adaptativa de Operadores --> E(UCB1);
-    E --> C;
-    C -- Melhores Soluções --> F[Busca Local Intensiva (VND + LNS)];
-    F -- Solução Otimizada --> G[Fim: Apresentação do Cronograma Final];
+    A[Início: Leitura da Instância do JSSP] --> B{Solver CP-SAT}
+    B -->|Solução Inicial de Alta Qualidade| C[Algoritmo Genético (GA)]
+    B -->|Timeout/Sem Solução| D[Heurísticas de Inicialização]
+    D --> C
+    C -->|Seleção Adaptativa de Operadores| E[UCB1]
+    E --> C
+    C -->|Melhores Soluções| F[Busca Local Intensiva]
+    F -->|Solução Otimizada| G[Fim: Apresentação do Cronograma]
 ```
 
 ## Detalhamento Funcional dos Componentes Algorítmicos
