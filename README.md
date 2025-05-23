@@ -4,10 +4,10 @@ Este documento apresenta uma análise aprofundada dos componentes algorítmicos 
 
 ## Arquitetura da Solução e Componentes Chave
 
-A solução é estruturada em torno de componentes modulares que encapsulam diferentes aspectos do tratamento do JSSP. Os principais componentes funcionais são:
+A solução implementada (conforme código no diretório `src/`) é estruturada em torno de componentes modulares que encapsulam diferentes aspectos do tratamento do JSSP. Os principais componentes funcionais implementados são:
 
 *   **Modelagem de Dados do Problema:** Responsável por definir a representação interna das instâncias do JSSP, incluindo jobs, operações, máquinas e durações, bem como a estrutura para representar um cronograma de operações resultante.
-*   **Utilitários e Gerenciamento de Dados:** Engloba funcionalidades para leitura de instâncias do problema a partir de formatos padrão e para a escrita das soluções geradas. Inclui também rotinas para cálculos auxiliares de agendamento, como a determinação do makespan.
+*   **Utilitários e Gerenciamento de Dados:** Engloba funcionalidades para leitura de instâncias do problema a partir de formatos padrão, conversão entre diferentes formatos de instância, e para a escrita das soluções geradas. Inclui também rotinas para cálculos auxiliares de agendamento, como a determinação do makespan.
 *   **Validação de Cronogramas:** Componente crucial para assegurar a factibilidade das soluções. Verifica se um cronograma gerado respeita todas as restrições do JSSP, como a ordem correta das operações de cada job, a não ocorrência de operações duplicadas e a ausência de sobreposições de operações em uma mesma máquina.
 *   **Orquestração de Solvers:** Módulo que gerencia e integra diferentes abordagens de solução (solvers) para o JSSP:
     *   Um solver baseado em Programação por Restrições (CP-SAT), utilizando a biblioteca OR-Tools, para encontrar soluções exatas ou de alta qualidade, frequentemente usado para gerar soluções iniciais.
@@ -116,6 +116,28 @@ Para intensificar a busca e refinar as soluções promissoras encontradas pelo A
     *   **Suporte à Paralelização:** A avaliação de vizinhos durante a busca local pode ser paralelizada (utilizando multithreading ou multiprocessing) para acelerar o processo, especialmente quando o cálculo da função objetivo para cada vizinho é computacionalmente intensivo.
 
 A implementação da VND é, portanto, bastante sofisticada, combinando a exploração sistemática de múltiplas vizinhanças com elementos adaptativos e mecanismos para escapar de ótimos locais, o que a torna uma ferramenta poderosa para o refinamento de soluções.
+
+## Resultados Obtidos
+
+A tabela abaixo apresenta os resultados obtidos para algumas instâncias do problema JSSP:
+
+| Instância | Melhor Makespan Final | Tempo Total de Execução |
+|-----------|------------------------|--------------------------|
+| abz5      | 1266                   | 48.33 segundos          |
+| abz6      | 977                    | 25.56 segundos          |
+| abz7      | 701                    | 382.54 segundos         |
+| abz8      | 722                    | 393.39 segundos         |
+| abz9      | 747                    | 206.45 segundos         |
+| la01      | 666                    | 15.52 segundos          |
+| la02      | 672                    | 28.08 segundos          |
+| la03      | 606                    | 21.63 segundos          |
+| la04      | 611                    | 16.29 segundos          |
+| la05      | 593                    | 15.45 segundos          |
+| la06      | 926                    | 24.89 segundos          |
+| la07      | 890                    | 27.76 segundos          |
+| la08      | 863                    | 23.77 segundos          |
+
+Os resultados acima foram gerados utilizando a solução implementada no projeto, conforme descrito nas seções anteriores.
 
 ## Conclusão e Principais Destaques
 
