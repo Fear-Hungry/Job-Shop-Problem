@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise da Solução para o Job-Shop Problem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .mermaid svg {
+            display: block;
+            margin: auto;
+        }
+        h2 {
+            border-bottom: 2px solid #e5e7eb; /* Cor cinza claro para a borda */
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        h3 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        table {
+            width: 100%;
+            margin-top: 1rem;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #d1d5db; /* Cor cinza para bordas da tabela */
+            padding: 0.75rem;
+            text-align: left;
+        }
+        th {
+            background-color: #f3f4f6; /* Cor de fundo para cabeçalho da tabela */
+        }
+        .code-block {
+            background-color: #1f2937; /* Fundo escuro para blocos de código */
+            color: #d1d5db; /* Texto claro para blocos de código */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.875rem; /* 14px */
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .container-custom {
+            max-width: 900px; /* Largura máxima do conteúdo principal */
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 leading-relaxed">
+
+    <header class="bg-gradient-to-r from-sky-600 to-cyan-500 text-white py-8 shadow-lg">
+        <div class="container-custom px-6 text-center">
+            <h1 class="text-4xl font-bold mb-2">Análise Detalhada da Estrutura e Algoritmos da Solução para o Job-Shop Problem</h1>
+            <p class="text-lg">Uma visão aprofundada do projeto e suas técnicas</p>
+        </div>
+    </header>
+
+    <main class="container-custom px-6 py-8">
+        <section id="intro-jssp" class="mb-8 p-6 bg-white rounded-lg shadow">
+            <h2 class="text-2xl font-semibold text-sky-700">Introdução ao Problema Job-Shop (JSSP)</h2>
+            <p class="mt-2">O Problema de Escalonamento Job-Shop (JSSP) é um dos problemas de otimização combinatória mais conhecidos e desafiadores na área de pesquisa operacional e ciência da computação. O objetivo principal é determinar a sequência ótima de operações para um conjunto de trabalhos (jobs) que devem ser processados em um conjunto de máquinas, minimizando geralmente o tempo total para completar todos os trabalhos (makespan). Cada trabalho consiste em uma sequência predefinida de operações, e cada operação deve ser processada em uma máquina específica por um determinado período.</p>
+            <p class="mt-2">Este documento apresenta uma análise aprofundada dos componentes algorítmicos e da arquitetura da solução desenvolvida para o JSSP, visando fornecer uma compreensão clara do funcionamento interno e das técnicas empregadas.</p>
+        </section>
+
+        <section id="arquitetura" class="mb-8 p-6 bg-white rounded-lg shadow">
+            <h2 class="text-2xl font-semibold text-sky-700">Arquitetura da Solução e Componentes Chave</h2>
+            <p>A solução implementada (conforme código no diretório <code>src/</code>) é estruturada em torno de componentes modulares que encapsulam diferentes aspectos do tratamento do JSSP. Os principais componentes funcionais implementados são:</p>
+            <ul class="list-disc list-inside mt-4 space-y-2">
+                <li><strong>Modelagem de Dados do Problema:</strong> Responsável por definir a representação interna das instâncias do JSSP, incluindo jobs, operações, máquinas e durações, bem como a estrutura para representar um cronograma de operações resultante.</li>
+                <li><strong>Utilitários e Gerenciamento de Dados:</strong> Engloba funcionalidades para leitura de instâncias do problema a partir de formatos padrão, conversão entre diferentes formatos de instância, e para a escrita das soluções geradas. Inclui também rotinas para cálculos auxiliares de agendamento, como a determinação do makespan.</li>
+                <li><strong>Validação de Cronogramas:</strong> Componente crucial para assegurar a factibilidade das soluções. Verifica se um cronograma gerado respeita todas as restrições do JSSP.</li>
+                <li><strong>Orquestração de Solvers:</strong> Módulo que gerencia e integra diferentes abordagens de solução (solvers) para o JSSP:
+                    <ul class="list-circle list-inside ml-6 mt-1 space-y-1">
+                        <li>Um solver baseado em Programação por Restrições (CP-SAT), utilizando a biblioteca OR-Tools.</li>
+                        <li>Um solver baseado em Algoritmo Genético.</li>
+                        <li>Infraestrutura para experimentação com variantes de algoritmos.</li>
+                        <li>Definição de interfaces base para garantir a interoperabilidade.</li>
+                    </ul>
+                </li>
+                <li><strong>Núcleo do Algoritmo Genético (GA):</strong> Componente central da abordagem heurística, contendo:
+                    <ul class="list-circle list-inside ml-6 mt-1 space-y-1">
+                        <li>Lógica do ciclo evolutivo, inicialização da população, funções de fitness.</li>
+                        <li>Mecanismos de seleção (torneio, roleta, elitismo).</li>
+                        <li><strong>Operadores Genéticos Especializados:</strong> Cruzamento (Order, PMX, Cycle, Position-Based, Disjuntivo) e Mutação (Standard, Disjuntiva, CriticalPathSwap).</li>
+                        <li>Seleção adaptativa de operadores (UCB1).</li>
+                        <li><strong>Representação e Manipulação baseada em Grafos:</strong> Grafo Disjuntivo, Union-Find.</li>
+                    </ul>
+                </li>
+                <li><strong>Estratégias de Busca Local:</strong> Implementa algoritmos como Variable Neighborhood Descent (VND) com diversos operadores de vizinhança (Swap, Inversion, Scramble, 2-opt, 3-opt, BlockMove, BlockSwap).</li>
+            </ul>
+        </section>
+
+        <section id="fluxograma" class="mb-8 p-6 bg-white rounded-lg shadow">
+            <h2 class="text-2xl font-semibold text-sky-700">Fluxograma Geral do Processo de Solução</h2>
+            <p class="mb-4">O diagrama abaixo ilustra o fluxo principal do processo de solução implementado no projeto:</p>
+            <div class="mermaid text-center">
+graph TD
+    A[Leitura da Instância] --> B{Solver CP-SAT?};
+    B -- Sim --> C[Solução CP-SAT];
+    B -- Não/Timeout --> D[Heurísticas Construtivas];
+    C --> E[População Inicial GA];
+    D --> E;
+    E --> F[Algoritmo Genético];
+    F -- Seleção Adaptativa (UCB1) --> F;
+    F --> G{Aplicar Busca Local?};
+    G -- Sim --> H[Busca Local (VND)];
+    H --> I[Solução Refinada];
+    G -- Não --> I;
+    I --> J[Solução Final e Validação];
+            </div>
+            <script>
+                mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+            </script>
+        </section>
+
+        <section id="detalhamento-algoritmos" class="mb-8 p-6 bg-white rounded-lg shadow">
+            <h2 class="text-2xl font-semibold text-sky-700">Detalhamento Funcional dos Componentes Algorítmicos</h2>
+
+            <h3 class="text-xl font-semibold text-sky-600">1. Representação de Soluções e Gestão de Dados de Instâncias</h3>
+            <p>Uma solução para o JSSP é representada como um cronograma detalhado, armazenando informações essenciais para cada operação. Rotinas para leitura, conversão e validação de cronogramas asseguram a integridade e factibilidade das soluções.</p>
+
+            <h3 class="text-xl font-semibold text-sky-600">2. Geração da Solução Inicial via Solver CP-SAT</h3>
+            <p>Para acelerar a convergência, um solver CP-SAT (OR-Tools) é usado para encontrar uma solução inicial de alta qualidade. Esta solução, ou soluções de heurísticas construtivas (ex: SPT), semeiam a população inicial do Algoritmo Genético, complementada por indivíduos aleatórios para diversidade.</p>
+
+            <h3 class="text-xl font-semibold text-sky-600">3. Otimização por Algoritmo Genético</h3>
+            <p>O GA explora o espaço de soluções para minimizar o makespan.</p>
+            <ul class="list-disc list-inside mt-2 space-y-1">
+                <li><strong>Codificação (Cromossomo):</strong> Permutação de operações, respeitando precedências. Decodificação via grafo disjuntivo.</li>
+                <li><strong>Avaliação (Fitness):</strong> Makespan (caminho crítico no grafo disjuntivo).</li>
+                <li><strong>Seleção de Pais:</strong> Torneio binário e elitismo.</li>
+                <li><strong>Operadores de Cruzamento:</strong> Clássicos (OX, PMX, CX, Position-Based) e o específico <strong>DisjunctiveCrossover</strong>.</li>
+                <li><strong>Operadores de Mutação:</strong> <em>StandardMutation</em>, <em>DisjunctiveMutation</em> (nível de máquina), e <em>CriticalPathSwap</em> (foco no caminho crítico).</li>
+                <li><strong>Integração da Busca Local:</strong> Aplicada a novos indivíduos (memético) ou como intensificação final.</li>
+            </ul>
+
+            <h3 class="text-xl font-semibold text-sky-600">4. Seleção Adaptativa de Operadores Genéticos (UCB1)</h3>
+            <p>O algoritmo UCB1 otimiza a escolha dos operadores genéticos (crossover e mutação), balanceando exploração e aproveitamento. A recompensa de um operador é baseada na melhoria do makespan. As probabilidades de seleção são atualizadas dinamicamente, guiando o GA a usar os operadores mais eficazes.</p>
+            <p class="mt-2">A fórmula do score para um operador $i$ é: $\text{score}_i = \bar{R}_i + c \sqrt{\frac{\ln N}{n_i}}$</p>
+            <p class="mt-1 text-sm text-gray-600">Onde $\bar{R}_i$ é a recompensa média, $N$ o total de seleções, $n_i$ as seleções do operador $i$, e $c$ a constante de exploração.</p>
+
+
+            <h3 class="text-xl font-semibold text-sky-600">5. Refinamento por Busca Local (Estratégias de Vizinhança)</h3>
+            <p>A Variable Neighborhood Descent (VND) intensifica a busca, explorando sistematicamente múltiplas estruturas de vizinhança (Swap, Inversion, Scramble, 2-opt, 3-opt, BlockMove, BlockSwap). Se uma melhoria é encontrada, a busca retorna à primeira vizinhança; caso contrário, avança. A ordenação das vizinhanças pode ser adaptativa (UCB1). Um mecanismo de "shaking" (LNS) ajuda a escapar de ótimos locais.</p>
+        </section>
+
+        <section id="resultados" class="mb-8 p-6 bg-white rounded-lg shadow">
+            <h2 class="text-2xl font-semibold text-sky-700">Resultados Obtidos</h2>
+            <p>A tabela abaixo apresenta os resultados obtidos para algumas instâncias do problema JSSP utilizando a solução implementada:</p>
+            <div class="overflow-x-auto">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Instância</th>
+                            <th>Melhor Makespan Final</th>
+                            <th>Tempo Total de Execução</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>abz5</td><td>1266</td><td>48.33 segundos</td></tr>
+                        <tr><td>abz6</td><td>977</td><td>25.56 segundos</td></tr>
+                        <tr><td>abz7</td><td>701</td><td>382.54 segundos</td></tr>
+                        <tr><td>abz8</td><td>722</td><td>393.39 segundos</td></tr>
+                        <tr><td>abz9</td><td>747</td><td>206.45 segundos</td></tr>
+                        <tr><td>la01</td><td>666</td><td>15.52 segundos</td></tr>
+                        <tr><td>la02</td><td>672</td><td>28.08 segundos</td></tr>
+                        <tr><td>la03</td><td>606</td><td>21.63 segundos</td></tr>
+                        <tr><td>la04</td><td>611</td><td>16.29 segundos</td></tr>
+                        <tr><td>la05</td><td>593</td><td>15.45 segundos</td></tr>
+                        <tr><td>la06</td><td>926</td><td>24.89 segundos</td></tr>
+                        <tr><td>la07</td><td>890</td><td>27.76 segundos</td></tr>
+                        <tr><td>la08</td><td>863</td><td>23.77 segundos</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="conclusao" class="mb-8 p-6 bg-white rounded-lg shadow">
+            <h2 class="text-2xl font-semibold text-sky-700">Conclusão e Principais Destaques</h2>
+            <p>O código na pasta <code>src/</code> do projeto Job-Shop-Problem implementa uma solução híbrida e robusta, combinando:</p>
+            <ul class="list-disc list-inside mt-4 space-y-2">
+                <li><strong>Representação Sólida:</strong> Definição clara de instâncias, cronogramas e validações rigorosas.</li>
+                <li><strong>Solver Exato como Ponto de Partida:</strong> Uso do CP-SAT para gerar soluções iniciais de alta qualidade.</li>
+                <li><strong>Meta-heurística Avançada (Algoritmo Genético):</strong> Para exploração ampla do espaço de soluções.</li>
+                <li><strong>Operadores Genéticos Especializados para JSSP:</strong> Crossovers e mutações customizadas.</li>
+                <li><strong>Seleção Adaptativa de Operadores (UCB1):</strong> Otimiza a escolha dos operadores genéticos.</li>
+                <li><strong>Busca Local Inteligente (VND + LNS):</strong> Para intensificação da busca e escape de ótimos locais.</li>
+            </ul>
+            <p class="mt-4">Essa combinação de técnicas visa um equilíbrio eficaz entre exploração global (GA) e exploração local (VND), resultando em uma ferramenta poderosa para encontrar cronogramas de baixo makespan. A modularidade do código facilita futuras extensões.</p>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-gray-300 py-8 text-center">
+        <div class="container-custom px-6">
+            <p>&copy; <span id="currentYear"></span> Seu Nome/Nome do Projeto. Todos os direitos reservados.</p>
+            <p class="mt-1 text-sm">Esta página é uma demonstração da apresentação do trabalho sobre JSSP.</p>
+            </div>
+    </footer>
+
+    <script>
+        // Script para o ano atual no rodapé
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+    </script>
+
+</body>
+</html>
