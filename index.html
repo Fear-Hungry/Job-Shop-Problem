@@ -10,7 +10,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            @apply bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300 transition-colors duration-300;
+            @apply bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200 transition-colors duration-300;
         }
         .mermaid {
             @apply flex justify-center my-8;
@@ -18,10 +18,11 @@
         .mermaid svg {
             display: block;
             max-width: 100%;
+            height: auto;
         }
-        /* Adaptação do Mermaid para Dark Mode */
+        /* Melhorias na adaptação do Mermaid para Dark Mode */
         .dark .mermaid svg text, .dark .mermaid svg .label, .dark .mermaid svg .edgeLabel, .dark .mermaid svg .nodeLabel {
-            fill: #cbd5e1 !important; /* Tailwind slate-300 */
+            fill: #e2e8f0 !important; /* Tailwind slate-200 */
         }
         .dark .mermaid svg .node rect, .dark .mermaid svg .node circle, .dark .mermaid svg .node ellipse, .dark .mermaid svg .node polygon, .dark .mermaid svg .node path {
             stroke: #64748b !important; /* Tailwind slate-500 */
@@ -39,86 +40,107 @@
         }
 
         h2 { /* Títulos principais de secção */
-            @apply text-3xl font-extrabold text-sky-600 dark:text-sky-400 mt-0 mb-6;
+            @apply text-3xl font-extrabold text-sky-700 dark:text-sky-300 mt-0 mb-8 leading-tight;
         }
         h3 { /* Subtítulos dentro das secções */
-            @apply text-xl font-bold text-sky-700 dark:text-sky-500 mt-8 mb-4;
+            @apply text-xl font-bold text-sky-800 dark:text-sky-400 mt-10 mb-6 leading-snug;
         }
 
         /* Estilos da Tabela Melhorados */
         table {
-            @apply w-full mt-6 border-collapse shadow-lg rounded-lg overflow-hidden;
+            @apply w-full mt-8 border-collapse shadow-xl rounded-xl overflow-hidden bg-white dark:bg-slate-800/90;
         }
         th, td {
-            @apply border border-slate-200 dark:border-slate-700 p-4;
+            @apply border border-slate-200 dark:border-slate-600/60 p-5;
         }
         th {
-            @apply bg-slate-100 dark:bg-slate-800 text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider;
+            @apply bg-gradient-to-r from-sky-100 to-sky-50 dark:from-slate-700 dark:to-slate-800 text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider;
         }
         td {
-            @apply text-sm text-slate-600 dark:text-slate-400;
+            @apply text-sm text-slate-700 dark:text-slate-300;
         }
         /* Alinhamento específico para colunas da tabela */
-        .th-instancia, .td-instancia { @apply text-center; }
-        .th-makespan, .td-makespan { @apply text-right; }
-        .th-tempo, .td-tempo { @apply text-right; }
+        .th-instancia, .td-instancia { @apply text-center font-medium; }
+        .th-makespan, .td-makespan { @apply text-right font-mono; }
+        .th-tempo, .td-tempo { @apply text-right font-mono; }
 
         /* Zebra striping para linhas da tabela */
         tbody tr:nth-child(even) {
-            @apply bg-slate-50 dark:bg-slate-800/60;
+            @apply bg-slate-50/80 dark:bg-slate-800/40;
         }
         tbody tr:hover {
-            @apply bg-sky-50 dark:bg-sky-900/40;
+            @apply bg-sky-50 dark:bg-sky-900/30 transform scale-[1.001] transition-all duration-200;
         }
-
 
         code { /* Estilo para código inline */
-            @apply bg-slate-200 dark:bg-slate-700 text-sky-700 dark:text-sky-400 px-1.5 py-0.5 rounded-md text-sm font-mono;
+            @apply bg-slate-200 dark:bg-slate-700/80 text-sky-800 dark:text-sky-300 px-2 py-1 rounded-md text-sm font-mono shadow-sm;
         }
         .formula-ucb1 { /* Estilo para a fórmula UCB1 */
-            @apply bg-slate-100 dark:bg-slate-800 p-4 rounded-lg my-4 text-center text-sm shadow;
+            @apply bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 p-6 rounded-xl my-6 text-center text-base shadow-lg border border-slate-200 dark:border-slate-600;
         }
         .container-custom {
-            max-width: 1024px;
+            max-width: 1200px;
             margin-left: auto;
             margin-right: auto;
         }
         .active-nav-link {
-            @apply bg-sky-600 text-white font-semibold shadow-lg;
+            @apply bg-gradient-to-r from-sky-600 to-sky-700 text-white font-semibold shadow-lg transform translate-x-1 border-l-4 border-sky-300;
         }
         html {
             scroll-behavior: smooth;
         }
         .back-to-top {
-            @apply block text-sm text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 mt-8 text-right font-semibold transition-colors duration-150;
+            @apply inline-flex items-center gap-2 text-sm text-sky-700 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300 mt-10 font-semibold transition-all duration-200 hover:transform hover:translate-y-[-2px];
         }
+
+        /* Melhorias no botão de modo escuro */
         #darkModeToggle {
-            @apply p-2 rounded-full hover:bg-sky-400 dark:hover:bg-sky-700 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-sky-600 dark:focus:ring-offset-sky-500 focus:ring-white transition-colors duration-150;
+            @apply p-3 rounded-full hover:bg-white/20 dark:hover:bg-black/20 text-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200 hover:scale-110;
         }
         #darkModeToggle svg {
-            @apply h-5 w-5;
+            @apply h-5 w-5 transition-transform duration-200;
         }
+
+        /* Melhorias na sidebar */
         #sidebar {
-            @apply bg-white dark:bg-slate-800/80 backdrop-blur-md border-r border-slate-200 dark:border-slate-700/60 shadow-xl;
+            @apply bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg border-r border-slate-200 dark:border-slate-700/60 shadow-2xl transition-transform duration-300 ease-in-out;
+        }
+        #sidebar.mobile-hidden {
+            @apply transform -translate-x-full;
         }
         #sidebar h3 {
-            @apply text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0 mb-5 px-4;
+            @apply text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0 mb-6 px-4 border-b border-slate-200 dark:border-slate-700 pb-3;
         }
         #sidebar .nav-link {
-            @apply px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-300 rounded-lg text-sm font-medium transition-all duration-150 ease-in-out transform hover:translate-x-1;
+            @apply px-4 py-3 mx-2 text-slate-700 dark:text-slate-300 hover:bg-sky-100/80 dark:hover:bg-slate-700/80 hover:text-sky-700 dark:hover:text-sky-300 rounded-xl text-sm font-medium transition-all duration-200 ease-in-out hover:shadow-md;
         }
-        main section { /* Cartões de secção */
-            @apply bg-white dark:bg-slate-800/80 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-10 border-t-4 border-sky-500 dark:border-sky-600;
+
+        /* Botão de menu mobile */
+        #mobileMenuBtn {
+            @apply md:hidden p-2 rounded-lg hover:bg-white/20 transition-colors duration-200;
         }
-        /* Estilo para listas dentro das seções */
+
+        /* Overlay para mobile */
+        #sidebarOverlay {
+            @apply fixed inset-0 bg-black/50 z-10 opacity-0 pointer-events-none transition-opacity duration-300;
+        }
+        #sidebarOverlay.show {
+            @apply opacity-100 pointer-events-auto;
+        }
+
+        main section { /* Cartões de secção melhorados */
+            @apply bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 sm:p-12 border border-slate-200/50 dark:border-slate-700/50 hover:shadow-3xl transition-all duration-300;
+        }
+
+        /* Melhorias nas listas */
         main section ul, main section ol {
-            @apply list-outside ml-5 space-y-3 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed;
+            @apply list-outside ml-6 space-y-4 text-slate-700 dark:text-slate-300 text-base md:text-lg leading-relaxed;
         }
         main section ul li strong, main section ol li strong {
-            @apply font-semibold text-slate-700 dark:text-slate-200;
+            @apply font-semibold text-slate-800 dark:text-slate-100;
         }
         main section ul ul, main section ol ol {
-            @apply mt-2 ml-5 space-y-2;
+            @apply mt-3 ml-6 space-y-3;
         }
         main section ul ul li strong, main section ol ol li strong {
             @apply font-medium;
@@ -127,13 +149,50 @@
         main section ul ul { @apply list-circle; }
         main section ol { @apply list-decimal; }
 
+        /* Melhorias nos parágrafos */
+        main section p {
+            @apply text-slate-700 dark:text-slate-300 text-base md:text-lg leading-relaxed;
+        }
+
+        /* Animação de entrada para as seções */
+        main section {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Melhorias no cabeçalho */
+        #page-header {
+            @apply bg-gradient-to-r from-sky-700 via-sky-600 to-indigo-700 shadow-xl backdrop-blur-sm;
+        }
+
+        /* Melhorias no footer */
+        footer {
+            @apply bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-t border-slate-300 dark:border-slate-600;
+        }
     </style>
 </head>
 <body class="leading-relaxed">
 
-    <header id="page-header" class="fixed top-0 left-0 right-0 z-30 bg-gradient-to-r from-sky-600 to-indigo-700 text-white shadow-lg h-16 flex items-center justify-between px-4 sm:px-6">
+    <header id="page-header" class="fixed top-0 left-0 right-0 z-30 text-white shadow-lg h-16 flex items-center justify-between px-4 sm:px-6">
         <div class="container-custom flex items-center justify-between w-full">
-            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">Análise da Solução para o Job-Shop Problem</h1>
+            <div class="flex items-center gap-4">
+                <button id="mobileMenuBtn" aria-label="Abrir menu de navegação" class="text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                </button>
+                <h1 class="text-lg sm:text-xl md:text-2xl font-extrabold tracking-tight">Análise da Solução para o Job-Shop Problem</h1>
+            </div>
             <button id="darkModeToggle" aria-label="Alternar modo claro/escuro">
                 <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-6.364-.386l1.591-1.591M3 12h2.25m.386-6.364l1.591 1.591" />
@@ -145,29 +204,36 @@
         </div>
     </header>
 
-    <aside id="sidebar" class="fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] p-6 z-20 transition-colors duration-300">
+    <div id="sidebarOverlay"></div>
+
+    <aside id="sidebar" class="fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] p-6 z-20 mobile-hidden md:mobile-hidden">
         <h3>Navegação</h3>
         <nav class="mt-2">
             <ul class="space-y-2">
-                <li><a href="#intro-jssp" aria-label="Ir para a seção Introdução ao JSSP" class="nav-link">Introdução JSSP</a></li>
-                <li><a href="#abordagem-algoritmos" aria-label="Ir para a seção Abordagem e Solvers" class="nav-link">Abordagem e Solvers</a></li>
-                <li><a href="#fluxograma" aria-label="Ir para a seção Fluxograma" class="nav-link">Fluxograma</a></li>
-                <li><a href="#resultados" aria-label="Ir para a seção Resultados" class="nav-link">Resultados</a></li>
-                <li><a href="#conclusao" aria-label="Ir para a seção Conclusão" class="nav-link">Conclusão</a></li>
+                <li><a href="#intro-jssp" aria-label="Ir para a seção Introdução ao JSSP" class="nav-link block">Introdução JSSP</a></li>
+                <li><a href="#abordagem-algoritmos" aria-label="Ir para a seção Abordagem e Solvers" class="nav-link block">Abordagem e Solvers</a></li>
+                <li><a href="#fluxograma" aria-label="Ir para a seção Fluxograma" class="nav-link block">Fluxograma</a></li>
+                <li><a href="#resultados" aria-label="Ir para a seção Resultados" class="nav-link block">Resultados</a></li>
+                <li><a href="#conclusao" aria-label="Ir para a seção Conclusão" class="nav-link block">Conclusão</a></li>
             </ul>
         </nav>
     </aside>
 
-    <div class="pt-16 pl-0 md:pl-64 min-h-screen flex flex-col">
-        <main class="flex-grow container-custom px-4 sm:px-6 py-10">
-            <section id="intro-jssp" class="scroll-mt-20 mb-10 p-6 sm:p-10">
+    <div class="pt-16 pl-0 md:pl-64 min-h-screen flex flex-col transition-all duration-300">
+        <main class="flex-grow container-custom px-4 sm:px-6 lg:px-8 py-12">
+            <section id="intro-jssp" class="scroll-mt-20 mb-12">
                 <h2>Introdução ao Problema Job-Shop (JSSP)</h2>
-                <p class="mt-4 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed">O Problema de Escalonamento Job-Shop (JSSP) é um dos problemas de otimização combinatória mais conhecidos e desafiadores na área de pesquisa operacional e ciência da computação. O objetivo principal é determinar a sequência ótima de operações para um conjunto de trabalhos (jobs) que devem ser processados em um conjunto de máquinas, minimizando geralmente o tempo total para completar todos os trabalhos (makespan).</p>
-                <p class="mt-4 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed">Este documento apresenta uma análise aprofundada dos componentes algorítmicos e da arquitetura da solução desenvolvida para o JSSP, com foco nas técnicas de resolução empregadas.</p>
-                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
+                <p class="mt-6">O Problema de Escalonamento Job-Shop (JSSP) é um dos problemas de otimização combinatória mais conhecidos e desafiadores na área de pesquisa operacional e ciência da computação. O objetivo principal é determinar a sequência ótima de operações para um conjunto de trabalhos (jobs) que devem ser processados em um conjunto de máquinas, minimizando geralmente o tempo total para completar todos os trabalhos (makespan).</p>
+                <p class="mt-6">Este documento apresenta uma análise aprofundada dos componentes algorítmicos e da arquitetura da solução desenvolvida para o JSSP, com foco nas técnicas de resolução empregadas.</p>
+                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">
+                    <span>Voltar ao Topo</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                    </svg>
+                </a>
             </section>
 
-            <section id="abordagem-algoritmos" class="scroll-mt-20 mb-10 p-6 sm:p-10">
+            <section id="abordagem-algoritmos" class="scroll-mt-20 mb-12">
                 <h2>Abordagem da Solução e Algoritmos de Solver</h2>
                 <p class="mt-4 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed">
                     A solução implementada (conforme código no diretório <code>src/</code>) é estruturada em torno de componentes modulares que encapsulam diferentes aspectos do tratamento do JSSP, com ênfase nos algoritmos de otimização.
@@ -246,10 +312,15 @@
                     <li>O principal método é a <strong>Variable Neighborhood Descent (VND)</strong>, que explora sistematicamente múltiplas estruturas de vizinhança. Contempla uma possível orquestração adaptativa da ordem e seleção das vizinhanças, potencialmente utilizando UCB1.</li>
                     <li>Um conjunto de <strong>operadores de vizinhança</strong> (movimentos) que podem ser aplicados a uma solução. Estes incluem trocas simples (Swap), inversão de segmentos (Inversion), embaralhamento de segmentos (Scramble), movimentos do tipo 2-opt e 3-opt, movimentação de blocos de operações (BlockMove) e troca de blocos (BlockSwap).</li>
                 </ul>
-                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
+                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">
+                    <span>Voltar ao Topo</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                    </svg>
+                </a>
             </section>
 
-            <section id="fluxograma" class="scroll-mt-20 mb-10 p-6 sm:p-10">
+            <section id="fluxograma" class="scroll-mt-20 mb-12">
                 <h2>Fluxograma Geral do Processo de Solução</h2>
                 <p class="mt-4 mb-3 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed">O diagrama abaixo ilustra o fluxo principal:</p>
                 <div class="mermaid">
@@ -267,10 +338,15 @@ flowchart TD
     H --> I;
     I --> J["Solução Final e Validação"];
                 </div>
-                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
+                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">
+                    <span>Voltar ao Topo</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                    </svg>
+                </a>
             </section>
 
-            <section id="resultados" class="scroll-mt-20 mb-10 p-6 sm:p-10">
+            <section id="resultados" class="scroll-mt-20 mb-12">
                 <h2>Resultados Obtidos</h2>
                 <p class="mt-4 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed">
                     A abordagem proposta foi avaliada em diversas instâncias benchmark do Job-Shop Scheduling Problem, amplamente utilizadas na literatura. A tabela a seguir apresenta o makespan final alcançado e o tempo total de execução para cada instância:
@@ -307,10 +383,15 @@ flowchart TD
                 <p class="mt-4 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed">
                     Esses resultados reforçam que a estratégia adotada — combinando um Algoritmo Genético robusto, soluções iniciais via CP-SAT, seleção adaptativa de operadores e busca local intensiva — é promissora para enfrentar a complexidade do JSSP, apresentando desempenho competitivo frente aos benchmarks clássicos do problema.
                 </p>
-                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
+                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">
+                    <span>Voltar ao Topo</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                    </svg>
+                </a>
             </section>
 
-            <section id="conclusao" class="scroll-mt-20 mb-10 p-6 sm:p-10">
+            <section id="conclusao" class="scroll-mt-20 mb-12">
                 <h2>Conclusão e Principais Destaques</h2>
                 <p class="mt-4 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed">A solução apresentada demonstra uma abordagem híbrida e robusta para o Problema de Escalonamento Job-Shop, combinando a precisão de solvers exatos para soluções iniciais com a capacidade de exploração e refinamento de meta-heurísticas avançadas. Os principais destaques incluem:</p>
                 <ul class="list-disc list-inside mt-6 space-y-3 text-slate-600 dark:text-slate-400 text-base md:text-lg">
@@ -321,14 +402,19 @@ flowchart TD
                     <li><strong>Busca Local Intensiva (VND):</strong> Para refinamento eficaz das soluções encontradas.</li>
                 </ul>
                 <p class="mt-4 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed">Esta combinação de técnicas visa um equilíbrio eficaz entre exploração global e exploração local, resultando numa ferramenta poderosa para encontrar cronogramas de baixo makespan.</p>
-                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
+                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">
+                    <span>Voltar ao Topo</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                    </svg>
+                </a>
             </section>
         </main>
 
-        <footer class="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 py-12 text-center transition-colors duration-300">
+        <footer class="text-slate-600 dark:text-slate-400 py-16 text-center transition-colors duration-300">
             <div class="container-custom px-6">
-                <p class="text-sm">&copy; <span id="currentYear"></span> Seu Nome/Nome do Projeto. Todos os direitos reservados.</p>
-                <p class="mt-2 text-xs">Página de demonstração do trabalho sobre JSSP.</p>
+                <p class="text-sm font-medium">&copy; <span id="currentYear"></span> Seu Nome/Nome do Projeto. Todos os direitos reservados.</p>
+                <p class="mt-3 text-xs opacity-75">Página de demonstração do trabalho sobre JSSP.</p>
             </div>
         </footer>
     </div>
@@ -457,6 +543,54 @@ flowchart TD
             });
         }
         window.addEventListener('scroll', onScrollSpy);
+
+        // Adicionar funcionalidade de menu mobile
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const navLinks = document.querySelectorAll('#sidebar .nav-link');
+
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('mobile-hidden');
+            sidebarOverlay.classList.toggle('show');
+        }
+
+        function closeMobileMenu() {
+            sidebar.classList.add('mobile-hidden');
+            sidebarOverlay.classList.remove('show');
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        sidebarOverlay.addEventListener('click', closeMobileMenu);
+
+        // Fechar menu mobile ao clicar em um link
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth < 768) {
+                    closeMobileMenu();
+                }
+            });
+        });
+
+        // Fechar menu mobile ao redimensionar para desktop
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                sidebar.classList.remove('mobile-hidden');
+                sidebarOverlay.classList.remove('show');
+            } else {
+                sidebar.classList.add('mobile-hidden');
+            }
+        });
+
+        // Inicializar estado do menu baseado no tamanho da tela
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('mobile-hidden');
+            } else {
+                sidebar.classList.remove('mobile-hidden');
+            }
+            // ...existing DOMContentLoaded code...
+        });
 
     </script>
 
