@@ -1,115 +1,260 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Análise da Solução para o Job-Shop Problem</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU07RLA8HuZQLoRtfFUyFDRVdN/LEqBqwZPmz9HiVlLqCOQD97ZYzXz" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            @apply bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300 transition-colors duration-300;
+        }
+        .mermaid {
+            @apply flex justify-center my-8;
         }
         .mermaid svg {
             display: block;
-            margin: auto;
+            max-width: 100%;
+            height: auto;
         }
+        .dark .mermaid svg text, .dark .mermaid svg .label, .dark .mermaid svg .edgeLabel, .dark .mermaid svg .nodeLabel, .dark .mermaid svg .labelText, .dark .mermaid svg tspan {
+            fill: #cbd5e1 !important;
+        }
+        .mermaid svg text, .mermaid svg .label, .mermaid svg .edgeLabel, .mermaid svg .nodeLabel, .mermaid svg .labelText, .mermaid svg tspan {
+            font-family: 'Inter', sans-serif !important;
+        }
+        .dark .mermaid svg .node rect, .dark .mermaid svg .node circle, .dark .mermaid svg .node ellipse, .dark .mermaid svg .node polygon, .dark .mermaid svg .node path {
+            stroke: #64748b !important;
+            fill: #334155 !important;
+        }
+         .dark .mermaid svg .cluster rect {
+            stroke: #64748b !important;
+            fill: #475569 !important;
+        }
+        .dark .mermaid svg .arrowheadPath {
+            fill: #64748b !important;
+        }
+        .dark .mermaid svg .edgePath .path {
+            stroke: #64748b !important;
+        }
+
         h2 {
-            border-bottom: 2px solid #e5e7eb; /* Cor cinza claro para a borda */
-            padding-bottom: 0.5rem;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
+            @apply text-3xl font-extrabold text-sky-600 dark:text-sky-400 mt-0 mb-6;
         }
         h3 {
-            margin-top: 1.5rem;
-            margin-bottom: 0.75rem;
+            @apply text-xl font-bold text-sky-700 dark:text-sky-500 mt-8 mb-4;
         }
+        /* Estilos para HTML renderizado a partir de Markdown */
+        .rendered-markdown-content p {
+            @apply mt-4 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed;
+        }
+        .rendered-markdown-content p:first-child {
+            @apply mt-0;
+        }
+        .rendered-markdown-content ul, .rendered-markdown-content ol {
+            @apply list-outside ml-5 space-y-3 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed mt-4;
+        }
+        .rendered-markdown-content ul { @apply list-disc; }
+        .rendered-markdown-content ol { @apply list-decimal; }
+        .rendered-markdown-content ul ul, .rendered-markdown-content ol ol {
+            @apply mt-2 ml-5 space-y-2;
+        }
+        .rendered-markdown-content ul ul { @apply list-circle; }
+        .rendered-markdown-content li strong {
+            @apply font-semibold text-slate-700 dark:text-slate-200;
+        }
+        .rendered-markdown-content h3 {
+             @apply text-xl font-bold text-sky-700 dark:text-sky-500 mt-6 mb-3;
+        }
+        .rendered-markdown-content h4 {
+             @apply text-lg font-semibold text-sky-600 dark:text-sky-400 mt-5 mb-2;
+        }
+        .rendered-markdown-content code {
+            @apply bg-slate-200 dark:bg-slate-700 text-sky-700 dark:text-sky-400 px-1.5 py-0.5 rounded-md text-sm font-mono;
+        }
+        /* Estilo para KaTeX (matemática) */
+        .katex-display {
+            @apply my-4 text-lg text-center;
+        }
+        .katex {
+            @apply text-base md:text-lg;
+        }
+
         table {
-            width: 100%;
-            margin-top: 1rem;
-            border-collapse: collapse;
+            @apply w-full mt-6 border-collapse shadow-lg rounded-lg overflow-hidden;
         }
         th, td {
-            border: 1px solid #d1d5db; /* Cor cinza para bordas da tabela */
-            padding: 0.75rem;
-            text-align: left;
+            @apply border border-slate-200 dark:border-slate-700 p-4;
         }
         th {
-            background-color: #f3f4f6; /* Cor de fundo para cabeçalho da tabela */
+            @apply bg-slate-100 dark:bg-slate-800 text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider;
         }
-        .code-block {
-            background-color: #1f2937; /* Fundo escuro para blocos de código */
-            color: #d1d5db; /* Texto claro para blocos de código */
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.875rem; /* 14px */
-            margin-top: 0.5rem;
-            margin-bottom: 1rem;
+        td {
+            @apply text-sm text-slate-600 dark:text-slate-400;
         }
+        .th-instancia, .td-instancia { @apply text-center; }
+        .th-makespan, .td-makespan { @apply text-right; }
+        .th-tempo, .td-tempo { @apply text-right; }
+        tbody tr:nth-child(even) {
+            @apply bg-slate-50 dark:bg-slate-800/60;
+        }
+        tbody tr:hover {
+            @apply bg-sky-50 dark:bg-sky-900/40;
+        }
+
         .container-custom {
-            max-width: 900px; /* Largura máxima do conteúdo principal */
+            max-width: 1024px;
             margin-left: auto;
             margin-right: auto;
         }
+        .active-nav-link {
+            @apply bg-sky-500 text-white font-semibold shadow-sm;
+        }
+        html {
+            /* scroll-behavior: smooth; */
+        }
+        .back-to-top {
+            @apply block text-sm text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 mt-8 text-right font-semibold transition-colors duration-150;
+        }
+        #darkModeToggle {
+            @apply p-2 rounded-full hover:bg-sky-400 dark:hover:bg-sky-700 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-sky-600 dark:focus:ring-offset-sky-500 focus:ring-white transition-colors duration-150;
+        }
+        #darkModeToggle svg {
+            @apply h-5 w-5;
+        }
+
+        #sidebar {
+            @apply bg-slate-200 dark:bg-slate-800 border-r border-slate-300 dark:border-slate-700 shadow-lg;
+        }
+        #sidebar h3 {
+            @apply text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0 mb-5 px-4 pt-1;
+        }
+        #sidebar .nav-link {
+            @apply px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-sky-700 dark:hover:text-sky-400 rounded-md text-sm font-medium transition-colors duration-150 cursor-pointer;
+        }
+
+        main section {
+            @apply bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 sm:p-10 border-t-4 border-sky-500 dark:border-sky-600;
+        }
+
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 leading-relaxed">
+<body class="leading-relaxed">
 
-    <header class="bg-gradient-to-r from-sky-600 to-cyan-500 text-white py-8 shadow-lg">
-        <div class="container-custom px-6 text-center">
-            <h1 class="text-4xl font-bold mb-2">Análise Detalhada da Estrutura e Algoritmos da Solução para o Job-Shop Problem</h1>
+    <header id="page-header" class="fixed top-0 left-0 right-0 z-30 bg-gradient-to-r from-sky-600 to-indigo-700 text-white shadow-lg h-16 flex items-center justify-between px-4 sm:px-6">
+        <div class="container-custom flex items-center justify-between w-full">
+            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">Análise da Solução para o Job-Shop Problem</h1>
+            <button id="darkModeToggle" aria-label="Alternar modo claro/escuro">
+                <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-6.364-.386l1.591-1.591M3 12h2.25m.386-6.364l1.591 1.591" />
+                </svg>
+                <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5 hidden">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21c1.603 0 3.113-.337 4.5-1.002z" />
+                </svg>
+            </button>
         </div>
     </header>
 
-    <main class="container-custom px-6 py-8">Ajuste Visual da Tabela
-Transforme a tabela em um formato visual mais limpo. Use espaçamento fixo ou markdown/tabulação, ou insira como tabela de verdade (Word, Overleaf, etc).
-
-Destaque o cabeçalho em negrito.
-
-Centralize os valores (se possível).
-
-Considere alinhar os números para facilitar comparação.
-        <section id="intro-jssp" class="mb-8 p-6 bg-white rounded-lg shadow">
-            <h2 class="text-2xl font-semibold text-sky-700">Introdução ao Problema Job-Shop (JSSP)</h2>
-            <p class="mt-2">O Problema de Escalonamento Job-Shop (JSSP) é um dos problemas de otimização combinatória mais conhecidos e desafiadores na área de pesquisa operacional e ciência da computação. O objetivo principal é determinar a sequência ótima de operações para um conjunto de trabalhos (jobs) que devem ser processados em um conjunto de máquinas, minimizando geralmente o tempo total para completar todos os trabalhos (makespan). Cada trabalho consiste em uma sequência predefinida de operações, e cada operação deve ser processada em uma máquina específica por um determinado período.</p>
-            <p class="mt-2">Este documento apresenta uma análise aprofundada dos componentes algorítmicos e da arquitetura da solução desenvolvida para o JSSP, visando fornecer uma compreensão clara do funcionamento interno e das técnicas empregadas.</p>
-        </section>
-
-        <section id="arquitetura" class="mb-8 p-6 bg-white rounded-lg shadow">
-            <h2 class="text-2xl font-semibold text-sky-700">Arquitetura da Solução e Componentes Chave</h2>
-            <p>A solução implementada (conforme código no diretório <code>src/</code>) é estruturada em torno de componentes modulares que encapsulam diferentes aspectos do tratamento do JSSP. Os principais componentes funcionais implementados são:</p>
-            <ul class="list-disc list-inside mt-4 space-y-2">
-                <li><strong>Modelagem de Dados do Problema:</strong> Responsável por definir a representação interna das instâncias do JSSP, incluindo jobs, operações, máquinas e durações, bem como a estrutura para representar um cronograma de operações resultante.</li>
-                <li><strong>Utilitários e Gerenciamento de Dados:</strong> Engloba funcionalidades para leitura de instâncias do problema a partir de formatos padrão, conversão entre diferentes formatos de instância, e para a escrita das soluções geradas. Inclui também rotinas para cálculos auxiliares de agendamento, como a determinação do makespan.</li>
-                <li><strong>Validação de Cronogramas:</strong> Componente crucial para assegurar a factibilidade das soluções. Verifica se um cronograma gerado respeita todas as restrições do JSSP.</li>
-                <li><strong>Orquestração de Solvers:</strong> Módulo que gerencia e integra diferentes abordagens de solução (solvers) para o JSSP:
-                    <ul class="list-circle list-inside ml-6 mt-1 space-y-1">
-                        <li>Um solver baseado em Programação por Restrições (CP-SAT), utilizando a biblioteca OR-Tools.</li>
-                        <li>Um solver baseado em Algoritmo Genético.</li>
-                        <li>Infraestrutura para experimentação com variantes de algoritmos.</li>
-                        <li>Definição de interfaces base para garantir a interoperabilidade.</li>
-                    </ul>
-                </li>
-                <li><strong>Núcleo do Algoritmo Genético (GA):</strong> Componente central da abordagem heurística, contendo:
-                    <ul class="list-circle list-inside ml-6 mt-1 space-y-1">
-                        <li>Lógica do ciclo evolutivo, inicialização da população, funções de fitness.</li>
-                        <li>Mecanismos de seleção (torneio, roleta, elitismo).</li>
-                        <li><strong>Operadores Genéticos Especializados:</strong> Cruzamento (Order, PMX, Cycle, Position-Based, Disjuntivo) e Mutação (Standard, Disjuntiva, CriticalPathSwap).</li>
-                        <li>Seleção adaptativa de operadores (UCB1).</li>
-                        <li><strong>Representação e Manipulação baseada em Grafos:</strong> Grafo Disjuntivo, Union-Find.</li>
-                    </ul>
-                </li>
-                <li><strong>Estratégias de Busca Local:</strong> Implementa algoritmos como Variable Neighborhood Descent (VND) com diversos operadores de vizinhança (Swap, Inversion, Scramble, 2-opt, 3-opt, BlockMove, BlockSwap).</li>
+    <aside id="sidebar" class="fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] p-6 z-20 transition-colors duration-300">
+        <h3>Navegação</h3>
+        <nav class="mt-2">
+            <ul class="space-y-2">
+                <li><a href="#intro-jssp" aria-label="Ir para a seção Introdução ao JSSP" class="nav-link">Introdução JSSP</a></li>
+                <li><a href="#abordagem-algoritmos" aria-label="Ir para a seção Abordagem e Solvers" class="nav-link">Abordagem e Solvers</a></li>
+                <li><a href="#fluxograma" aria-label="Ir para a seção Fluxograma" class="nav-link">Fluxograma</a></li>
+                <li><a href="#resultados" aria-label="Ir para a seção Resultados" class="nav-link">Resultados</a></li>
+                <li><a href="#conclusao" aria-label="Ir para a seção Conclusão" class="nav-link">Conclusão</a></li>
             </ul>
-        </section>
+        </nav>
+    </aside>
 
-        <section id="fluxograma" class="mb-8 p-6 bg-white rounded-lg shadow">
-            <h2 class="text-2xl font-semibold text-sky-700">Fluxograma Geral do Processo de Solução</h2>
-            <p class="mb-4">O diagrama abaixo ilustra o fluxo principal do processo de solução implementado no projeto:</p>
-            <div class="mermaid text-center">
+    <div class="pt-16 pl-0 md:pl-64 min-h-screen flex flex-col">
+        <main class="flex-grow container-custom px-4 sm:px-6 py-10">
+            <section id="intro-jssp" class="main-section scroll-mt-20 mb-10 p-6 sm:p-10" style="display: none;">
+                <h2>Introdução ao Problema Job-Shop (JSSP)</h2>
+                <div class="markdown-source" style="display:none;">
+O Problema de Escalonamento Job-Shop (JSSP) é um dos problemas de otimização combinatória mais conhecidos e desafiadores na área de pesquisa operacional e ciência da computação. O objetivo principal é determinar a sequência ótima de operações para um conjunto de trabalhos (jobs) que devem ser processados em um conjunto de máquinas, minimizando geralmente o tempo total para completar todos os trabalhos (makespan).
+
+Este documento apresenta uma análise aprofundada dos componentes algorítmicos e da arquitetura da solução desenvolvida para o JSSP, com foco nas técnicas de resolução empregadas.
+                </div>
+                <div class="rendered-markdown-content mt-4"></div>
+                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
+            </section>
+
+            <section id="abordagem-algoritmos" class="main-section scroll-mt-20 mb-10 p-6 sm:p-10" style="display: none;">
+                <h2>Abordagem da Solução e Algoritmos de Solver</h2>
+                <div class="markdown-source" style="display:none;">
+A solução implementada (conforme código no diretório `src/`) é estruturada em torno de componentes modulares que encapsulam diferentes aspectos do tratamento do JSSP, com ênfase nos algoritmos de otimização.
+                </div>
+                <div class="rendered-markdown-content mt-4"></div>
+
+                <h3 id="solver-cp-sat">Geração da Solução Inicial (CP-SAT)</h3>
+                <div class="markdown-source" style="display:none;">
+Para acelerar a convergência e fornecer um ponto de partida de alta qualidade, a solução integra um solver baseado em Programação por Restrições (CP-SAT), utilizando a biblioteca OR-Tools. Uma porção configurável do tempo total de resolução pode ser alocada para que o solver CP-SAT tente encontrar uma solução ótima ou de boa qualidade. O cronograma resultante desta fase é então utilizado como semente para a população inicial do Algoritmo Genético, podendo ser complementado por heurísticas construtivas simples para diversificação.
+                </div>
+                <div class="rendered-markdown-content mt-3"></div>
+
+                <h3 id="solver-ga">Otimização por Algoritmo Genético (GA)</h3>
+                <div class="markdown-source" style="display:none;">
+O componente central da busca heurística é um Algoritmo Genético (GA) projetado para explorar eficientemente o espaço de soluções do JSSP, com o objetivo primário de minimizar o makespan.
+
+* **Codificação da Solução (Cromossomo):** Cada gene é uma tupla `(job_id, op_id)`, identificando unicamente uma operação. O cromossomo é uma lista dessas tuplas, contendo todas as operações numa ordem específica que respeita as precedências internas de cada job.
+* **Inicialização da População:** Gerada usando soluções do CP-SAT, heurísticas (SPT, LPT, FIFO) ou variações aleatórias, garantindo que cada cromossomo seja uma permutação completa.
+* **Decodificação e Avaliação da Qualidade (Fitness):** A função `_calculate_schedule_details_static` processa o cromossomo, agenda operações o mais cedo possível e calcula o makespan (menor é melhor) através do caminho crítico no grafo disjuntivo.
+* **Mecanismo de Seleção de Pais:** Predominantemente **seleção por torneio binário**, com estratégia de **elitismo**.
+* **Operadores Genéticos (Cruzamento e Mutação):**
+    * **Cruzamento:** Variantes de operadores de permutação (PMX, Order Crossover, etc.) e o **DisjunctiveCrossover** (específico para JSSP).
+    * **Mutação:** Trocas simples (StandardMutation), **DisjunctiveMutation** (nível de máquina) e **CriticalPathSwap** (foco no caminho crítico).
+    * Soluções resultantes podem passar por busca local (algoritmos meméticos).
+* **Integração da Busca Local no Fluxo do GA:** Aplicada a novos indivíduos ou como intensificação final da melhor solução do GA.
+    1.  Como parte de um algoritmo memético.
+    2.  Como uma fase de intensificação final.
+* **Gestão da População:** Formada por descendentes e indivíduos preservados pelo elitismo.
+
+Em suma, codificamos o problema de Job-Shop como uma simples permutação de genes `(job, etapa)`. A validação de precedência e cálculo de makespan ficam a cargo do decodificador estático, e todos os operadores genéticos trabalham sobre essa representação de permutação.
+                </div>
+                <div class="rendered-markdown-content mt-3"></div>
+
+                <h3 id="solver-ucb1">Seleção Adaptativa de Operadores Genéticos (UCB1)</h3>
+                <div class="markdown-source" style="display:none;">
+Para otimizar a aplicação dos diversos operadores genéticos, um mecanismo de seleção adaptativa baseado no algoritmo UCB1 ajusta dinamicamente a probabilidade de escolha dos operadores com base no seu desempenho histórico. A fórmula do score para um operador $i$ é:
+
+$$\text{score}_i = \bar{R}_i + c \sqrt{\frac{\ln N}{n_i}}$$
+
+Onde $\bar{R}_i$ é a recompensa média do operador, $N$ é o número total de vezes que qualquer operador foi selecionado, $n_i$ é o número de vezes que o operador $i$ foi selecionado, e $c$ é uma constante que controla o nível de exploração.
+                </div>
+                <div class="rendered-markdown-content mt-3"></div>
+                <h3 id="solver-grafos">Representação e Manipulação baseada em Grafos</h3>
+                <div class="markdown-source" style="display:none;">
+* Implementação do **Grafo Disjuntivo** do JSSP: Usado para modelar restrições, detetar ciclos (inviabilidades), obter ordenação topológica e calcular o makespan (caminho crítico) a partir de um cromossomo.
+* Utilização da estrutura Union-Find (DSU): Para deteção eficiente de ciclos durante a construção ou modificação de soluções.
+                </div>
+                <div class="rendered-markdown-content mt-3"></div>
+
+
+                <h3 id="solver-vnd">Refinamento por Busca Local (Estratégias de Vizinhança - VND)</h3>
+                <div class="markdown-source" style="display:none;">
+A Variable Neighborhood Descent (VND) é empregada para intensificar a busca, explorando sistematicamente múltiplas estruturas de vizinhança (Swap, Inversion, Scramble, 2-opt, BlockMove, etc.), potencialmente com ordenação adaptativa via UCB1.
+                </div>
+                <div class="rendered-markdown-content mt-3"></div>
+                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
+            </section>
+
+            <section id="fluxograma" class="main-section scroll-mt-20 mb-10 p-6 sm:p-10" style="display: none;">
+                <h2>Fluxograma Geral do Processo de Solução</h2>
+                <div class="markdown-source" style="display:none;">
+O diagrama abaixo ilustra o fluxo principal:
+                </div>
+                <div class="rendered-markdown-content mt-4 mb-3"></div>
+                <div class="mermaid">
 flowchart TD
     A["Leitura da Instância"] --> B{"Solver CP-SAT?"};
     B -- "Sim" --> C["Solução CP-SAT"];
@@ -123,98 +268,291 @@ flowchart TD
     G -- "Não" --> I["Solução Refinada"];
     H --> I;
     I --> J["Solução Final e Validação"];
+                </div>
+                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
+            </section>
+
+            <section id="resultados" class="main-section scroll-mt-20 mb-10 p-6 sm:p-10" style="display: none;">
+                <h2>Resultados Obtidos</h2>
+                <div class="markdown-source" style="display:none;">
+A abordagem proposta foi avaliada em diversas instâncias benchmark do Job-Shop Scheduling Problem, amplamente utilizadas na literatura. A tabela a seguir apresenta o makespan final alcançado e o tempo total de execução para cada instância:
+                </div>
+                <div class="rendered-markdown-content mt-4"></div>
+
+                <div id="markdown-table-source" style="display: none;">
+| Instância | Melhor Makespan Final | Tempo Total de Execução&nbsp; |
+|:----------|----------------------:|--------------------------:|
+| abz5      |                  1266 |                 48,33 s   |
+| abz6      |                   977 |                 25,56 s   |
+| abz7      |                   701 |                382,54 s   |
+| abz8      |                   993 |                 33,39 s   |
+| abz9      |                   747 |                206,45 s   |
+| la01      |                   666 |                 15,52 s   |
+| la02      |                   672 |                 28,08 s   |
+| la03      |                   606 |                 21,63 s   |
+| la04      |                   611 |                 16,29 s   |
+| la05      |                   593 |                 15,45 s   |
+| la06      |                   926 |                 28,89 s   |
+| la07      |                   890 |                 24,76 s   |
+| la08      |                   863 |                 23,77 s   |
+                </div>
+                <div id="rendered-table-container" class="overflow-x-auto mt-6"></div>
+
+                <div class="markdown-source" style="display:none;">
+Observa-se que a abordagem foi capaz de encontrar soluções de alta qualidade para todas as instâncias, mantendo tempos de execução competitivos mesmo em casos de maior complexidade.
+
+Esses resultados reforçam que a estratégia adotada — combinando um Algoritmo Genético robusto, soluções iniciais via CP-SAT, seleção adaptativa de operadores e busca local intensiva — é promissora para enfrentar a complexidade do JSSP, apresentando desempenho competitivo frente aos benchmarks clássicos do problema.
+                </div>
+                <div class="rendered-markdown-content mt-6"></div>
+                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
+            </section>
+
+            <section id="conclusao" class="main-section scroll-mt-20 mb-10 p-6 sm:p-10" style="display: none;">
+                <h2>Conclusão e Principais Destaques</h2>
+                <div class="markdown-source" style="display:none;">
+A solução apresentada demonstra uma abordagem híbrida e robusta para o Problema de Escalonamento Job-Shop, combinando a precisão de solvers exatos para soluções iniciais com a capacidade de exploração e refinamento de meta-heurísticas avançadas. Os principais destaques incluem:
+
+* **Geração de Soluções Iniciais de Qualidade:** Utilização do CP-SAT para fornecer um ponto de partida sólido.
+* **Algoritmo Genético Especializado:** Com codificação, operadores de cruzamento e mutação adaptados ao JSSP.
+* **Seleção Adaptativa de Operadores (UCB1):** Otimização dinâmica da escolha dos operadores genéticos.
+* **Manipulação Eficiente de Restrições:** Uso do Grafo Disjuntivo para cálculo de makespan e validação.
+* **Busca Local Intensiva (VND):** Para refinamento eficaz das soluções encontradas.
+
+Esta combinação de técnicas visa um equilíbrio eficaz entre exploração global e exploração local, resultando numa ferramenta poderosa para encontrar cronogramas de baixo makespan.
+                </div>
+                <div class="rendered-markdown-content mt-4"></div>
+                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
+            </section>
+        </main>
+
+        <footer class="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 py-12 text-center transition-colors duration-300">
+            <div class="container-custom px-6">
+                <p class="text-sm">&copy; <span id="currentYear"></span> Seu Nome/Nome do Projeto. Todos os direitos reservados.</p>
+                <p class="mt-2 text-xs">Página de demonstração do trabalho sobre JSSP.</p>
             </div>
-            <script>
-                mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
-            </script>
-        </section>
-
-        <section id="detalhamento-algoritmos" class="mb-8 p-6 bg-white rounded-lg shadow">
-            <h2 class="text-2xl font-semibold text-sky-700">Detalhamento Funcional dos Componentes Algorítmicos</h2>
-
-            <h3 class="text-xl font-semibold text-sky-600">1. Representação de Soluções e Gestão de Dados de Instâncias</h3>
-            <p>Uma solução para o JSSP é representada como um cronograma detalhado, armazenando informações essenciais para cada operação. Rotinas para leitura, conversão e validação de cronogramas asseguram a integridade e factibilidade das soluções.</p>
-
-            <h3 class="text-xl font-semibold text-sky-600">2. Geração da Solução Inicial via Solver CP-SAT</h3>
-            <p>Para acelerar a convergência, um solver CP-SAT (OR-Tools) é usado para encontrar uma solução inicial de alta qualidade. Esta solução, ou soluções de heurísticas construtivas (ex: SPT), semeiam a população inicial do Algoritmo Genético, complementada por indivíduos aleatórios para diversidade.</p>
-
-            <h3 class="text-xl font-semibold text-sky-600">3. Otimização por Algoritmo Genético</h3>
-            <p>O GA explora o espaço de soluções para minimizar o makespan.</p>
-            <ul class="list-disc list-inside mt-2 space-y-1">
-                <li><strong>Codificação (Cromossomo):</strong> Permutação de operações, respeitando precedências. Decodificação via grafo disjuntivo.</li>
-                <li><strong>Avaliação (Fitness):</strong> Makespan (caminho crítico no grafo disjuntivo).</li>
-                <li><strong>Seleção de Pais:</strong> Torneio binário e elitismo.</li>
-                <li><strong>Operadores de Cruzamento:</strong> Clássicos (OX, PMX, CX, Position-Based) e o específico <strong>DisjunctiveCrossover</strong>.</li>
-                <li><strong>Operadores de Mutação:</strong> <em>StandardMutation</em>, <em>DisjunctiveMutation</em> (nível de máquina), e <em>CriticalPathSwap</em> (foco no caminho crítico).</li>
-                <li><strong>Integração da Busca Local:</strong> Aplicada a novos indivíduos (memético) ou como intensificação final.</li>
-            </ul>
-
-            <h3 class="text-xl font-semibold text-sky-600">4. Seleção Adaptativa de Operadores Genéticos (UCB1)</h3>
-            <p>O algoritmo UCB1 otimiza a escolha dos operadores genéticos (crossover e mutação), balanceando exploração e aproveitamento. A recompensa de um operador é baseada na melhoria do makespan. As probabilidades de seleção são atualizadas dinamicamente, guiando o GA a usar os operadores mais eficazes.</p>
-            <p class="mt-2">A fórmula do score para um operador $i$ é: $\text{score}_i = \bar{R}_i + c \sqrt{\frac{\ln N}{n_i}}$</p>
-            <p class="mt-1 text-sm text-gray-600">Onde $\bar{R}_i$ é a recompensa média, $N$ o total de seleções, $n_i$ as seleções do operador $i$, e $c$ a constante de exploração.</p>
-
-
-            <h3 class="text-xl font-semibold text-sky-600">5. Refinamento por Busca Local (Estratégias de Vizinhança)</h3>
-            <p>A Variable Neighborhood Descent (VND) intensifica a busca, explorando sistematicamente múltiplas estruturas de vizinhança (Swap, Inversion, Scramble, 2-opt, 3-opt, BlockMove, BlockSwap). Se uma melhoria é encontrada, a busca retorna à primeira vizinhança; caso contrário, avança. A ordenação das vizinhanças pode ser adaptativa (UCB1). Um mecanismo de "shaking" (LNS) ajuda a escapar de ótimos locais.</p>
-        </section>
-
-        <section id="resultados" class="mb-8 p-6 bg-white rounded-lg shadow">
-            <h2 class="text-2xl font-semibold text-sky-700">Resultados Obtidos</h2>
-            <p>A tabela abaixo apresenta os resultados obtidos para algumas instâncias do problema JSSP utilizando a solução implementada:</p>
-            <div class="overflow-x-auto">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Instância</th>
-                            <th>Melhor Makespan Final</th>
-                            <th>Tempo Total de Execução</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>abz5</td><td>1266</td><td>48.33 segundos</td></tr>
-                        <tr><td>abz6</td><td>977</td><td>25.56 segundos</td></tr>
-                        <tr><td>abz7</td><td>701</td><td>382.54 segundos</td></tr>
-                        <tr><td>abz8</td><td>722</td><td>393.39 segundos</td></tr>
-                        <tr><td>abz9</td><td>747</td><td>206.45 segundos</td></tr>
-                        <tr><td>la01</td><td>666</td><td>15.52 segundos</td></tr>
-                        <tr><td>la02</td><td>672</td><td>28.08 segundos</td></tr>
-                        <tr><td>la03</td><td>606</td><td>21.63 segundos</td></tr>
-                        <tr><td>la04</td><td>611</td><td>16.29 segundos</td></tr>
-                        <tr><td>la05</td><td>593</td><td>15.45 segundos</td></tr>
-                        <tr><td>la06</td><td>926</td><td>24.89 segundos</td></tr>
-                        <tr><td>la07</td><td>890</td><td>27.76 segundos</td></tr>
-                        <tr><td>la08</td><td>863</td><td>23.77 segundos</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="conclusao" class="mb-8 p-6 bg-white rounded-lg shadow">
-            <h2 class="text-2xl font-semibold text-sky-700">Conclusão e Principais Destaques</h2>
-            <p>O código na pasta <code>src/</code> do projeto Job-Shop-Problem implementa uma solução híbrida e robusta, combinando:</p>
-            <ul class="list-disc list-inside mt-4 space-y-2">
-                <li><strong>Representação Sólida:</strong> Definição clara de instâncias, cronogramas e validações rigorosas.</li>
-                <li><strong>Solver Exato como Ponto de Partida:</strong> Uso do CP-SAT para gerar soluções iniciais de alta qualidade.</li>
-                <li><strong>Meta-heurística Avançada (Algoritmo Genético):</strong> Para exploração ampla do espaço de soluções.</li>
-                <li><strong>Operadores Genéticos Especializados para JSSP:</strong> Crossovers e mutações customizadas.</li>
-                <li><strong>Seleção Adaptativa de Operadores (UCB1):</strong> Otimiza a escolha dos operadores genéticos.</li>
-                <li><strong>Busca Local Inteligente (VND + LNS):</strong> Para intensificação da busca e escape de ótimos locais.</li>
-            </ul>
-            <p class="mt-4">Essa combinação de técnicas visa um equilíbrio eficaz entre exploração global (GA) e exploração local (VND), resultando em uma ferramenta poderosa para encontrar cronogramas de baixo makespan. A modularidade do código facilita futuras extensões.</p>
-        </section>
-    </main>
-
-    <footer class="bg-gray-800 text-gray-300 py-8 text-center">
-        <div class="container-custom px-6">
-            <p>&copy; <span id="currentYear"></span> Seu Nome/Nome do Projeto. Todos os direitos reservados.</p>
-            <p class="mt-1 text-sm">Esta página é uma demonstração da apresentação do trabalho sobre JSSP.</p>
-            </div>
-    </footer>
+        </footer>
+    </div>
 
     <script>
-        // Script para o ano atual no rodapé
         document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+        const htmlElement = document.documentElement;
+
+        const navLinks = document.querySelectorAll('#sidebar nav a.nav-link');
+        const mainSections = document.querySelectorAll('main section.main-section');
+        const activeLinkClass = 'active-nav-link';
+
+        function renderMermaidInElement(element, isDarkTheme) {
+            if (typeof mermaid !== 'undefined' && element) {
+                const originalGraphDefinition = element.getAttribute('data-original-definition');
+                if (originalGraphDefinition) {
+                    element.removeAttribute('data-processed');
+                    element.innerHTML = '';
+
+                    const themeDirective = `%%{init: {'theme': '${isDarkTheme ? 'dark' : 'neutral'}'}}%%\n`;
+                    const definitionTextNode = document.createTextNode(themeDirective + originalGraphDefinition);
+                    element.appendChild(definitionTextNode);
+
+                    requestAnimationFrame(() => {
+                        try {
+                            mermaid.run({ nodes: [element] });
+                        } catch (e) {
+                            console.error("Erro ao renderizar Mermaid para o elemento:", element, e);
+                        }
+                    });
+                }
+            }
+        }
+
+        function renderAllMarkdownContent() {
+            if (typeof marked !== 'undefined') {
+                document.querySelectorAll('.markdown-source').forEach(sourceEl => {
+                    const markdownText = sourceEl.textContent; // Get raw text, including newlines
+                    const targetEl = sourceEl.nextElementSibling;
+                    if (targetEl && targetEl.classList.contains('rendered-markdown-content')) {
+                        targetEl.innerHTML = marked.parse(markdownText);
+                    }
+                });
+                // Call KaTeX rendering after Markdown is parsed and inserted
+                if (typeof renderMathInElement === 'function') {
+                     // Ensure KaTeX's renderMathInElement is available
+                    renderMathInElement(document.body, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false},
+                            {left: '\\(', right: '\\)', display: false},
+                            {left: '\\[', right: '\\]', display: true}
+                        ],
+                        throwOnError: false
+                    });
+                }
+            }
+        }
+
+
+        function showSection(targetId) {
+            let sectionToShow = null;
+            mainSections.forEach(section => {
+                if (section.id === targetId) {
+                    section.style.display = 'block';
+                    sectionToShow = section;
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.toggle(activeLinkClass, link.hash === `#${targetId}`);
+            });
+
+            if (sectionToShow) {
+                const mermaidElement = sectionToShow.querySelector('.mermaid');
+                if (mermaidElement) {
+                    renderMermaidInElement(mermaidElement, htmlElement.classList.contains('dark'));
+                }
+                if (targetId === 'resultados') {
+                    renderMarkdownTable();
+                }
+            }
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const targetId = link.hash.substring(1);
+                document.getElementById('page-header').scrollIntoView({behavior: 'auto'});
+                showSection(targetId);
+                history.pushState(null, null, `#${targetId}`);
+            });
+        });
+
+        function handleHashChange() {
+            let targetId = window.location.hash.substring(1);
+            if (!targetId && mainSections.length > 0) {
+                targetId = mainSections[0].id;
+                if (history.replaceState) {
+                    history.replaceState(null, null, `#${targetId}`);
+                }
+            }
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                showSection(targetId);
+            } else if (mainSections.length > 0) {
+                showSection(mainSections[0].id);
+                 if (history.replaceState) {
+                    history.replaceState(null, null, `#${mainSections[0].id}`);
+                }
+            }
+        }
+        window.addEventListener('hashchange', handleHashChange);
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                htmlElement.classList.add('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                htmlElement.classList.remove('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+                localStorage.setItem('theme', 'light');
+            }
+
+            const visibleSection = Array.from(mainSections).find(s => s.style.display === 'block');
+            if (visibleSection) {
+                const mermaidElement = visibleSection.querySelector('.mermaid');
+                if (mermaidElement) {
+                    renderMermaidInElement(mermaidElement, isDark);
+                }
+            }
+        }
+
+        function renderMarkdownTable() {
+            const markdownTableSourceEl = document.getElementById('markdown-table-source');
+            const renderedTableContainerEl = document.getElementById('rendered-table-container');
+
+            if (markdownTableSourceEl && renderedTableContainerEl && typeof marked !== 'undefined') {
+                const markdownTable = markdownTableSourceEl.textContent.trim();
+                renderedTableContainerEl.innerHTML = marked.parse(markdownTable);
+
+                const tableElement = renderedTableContainerEl.querySelector('table');
+                if (tableElement) {
+                    tableElement.classList.add('w-full', 'border-collapse', 'shadow-lg', 'rounded-lg', 'overflow-hidden');
+
+                    tableElement.querySelectorAll('thead th').forEach((th, index) => {
+                        th.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-sm', 'font-bold', 'text-slate-600', 'dark:text-slate-300', 'uppercase', 'tracking-wider', 'p-4', 'border', 'border-slate-200', 'dark:border-slate-700');
+                        if (index === 0) th.classList.add('text-center');
+                        else th.classList.add('text-right');
+                    });
+
+                    tableElement.querySelectorAll('tbody td').forEach((td) => {
+                        td.classList.add('text-sm', 'text-slate-600', 'dark:text-slate-400', 'p-4', 'border', 'border-slate-200', 'dark:border-slate-700');
+                        const colIndex = td.cellIndex;
+                         if (colIndex === 0) td.classList.add('text-center');
+                         else td.classList.add('text-right');
+                    });
+
+                    tableElement.querySelectorAll('tbody tr').forEach((tr, index) => {
+                        if (index % 2 !== 0) {
+                             tr.classList.add('bg-slate-50', 'dark:bg-slate-800/60');
+                        }
+                        tr.addEventListener('mouseover', () => tr.classList.add('bg-sky-50', 'dark:bg-sky-900/40'));
+                        tr.addEventListener('mouseout', () => tr.classList.remove('bg-sky-50', 'dark:bg-sky-900/40'));
+                    });
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.mermaid').forEach(el => {
+                const rawDefinition = Array.from(el.childNodes)
+                                        .filter(node => node.nodeType === Node.TEXT_NODE)
+                                        .map(node => node.nodeValue)
+                                        .join('\n')
+                                        .trim();
+                if (rawDefinition) {
+                    el.setAttribute('data-original-definition', rawDefinition);
+                }
+                el.innerHTML = '';
+            });
+
+            if (typeof mermaid !== 'undefined') {
+                try {
+                    mermaid.initialize({ startOnLoad: false });
+                } catch (e) {
+                    console.error("Erro ao inicializar Mermaid:", e);
+                }
+            }
+
+            renderAllMarkdownContent();
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            let initialIsDark = prefersDark;
+            if (savedTheme) {
+                initialIsDark = (savedTheme === 'dark');
+            }
+
+            if (initialIsDark) {
+                htmlElement.classList.add('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                htmlElement.classList.remove('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+            applyTheme(initialIsDark);
+            handleHashChange();
+        });
+
+        darkModeToggle.addEventListener('click', () => {
+            applyTheme(!htmlElement.classList.contains('dark'));
+        });
     </script>
 
 </body>
