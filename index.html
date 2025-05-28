@@ -6,7 +6,7 @@
     <title>Análise da Solução para o Job-Shop Problem</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU07RLA8HuZQLoRtfFUyFDRVdN/LEqBqwZPmz9HiVlLqCOQD97ZYzXz" crossorigin="anonymous">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
@@ -18,84 +18,86 @@
             @apply bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300 transition-colors duration-300;
         }
         .mermaid {
-            @apply flex justify-center my-8;
+            @apply flex justify-center my-8; 
         }
         .mermaid svg {
-            display: block;
+            display: block; 
             max-width: 100%;
-            height: auto;
+            height: auto; 
         }
         .dark .mermaid svg text, .dark .mermaid svg .label, .dark .mermaid svg .edgeLabel, .dark .mermaid svg .nodeLabel, .dark .mermaid svg .labelText, .dark .mermaid svg tspan {
-            fill: #cbd5e1 !important;
+            fill: #cbd5e1 !important; 
         }
         .mermaid svg text, .mermaid svg .label, .mermaid svg .edgeLabel, .mermaid svg .nodeLabel, .mermaid svg .labelText, .mermaid svg tspan {
             font-family: 'Inter', sans-serif !important;
         }
         .dark .mermaid svg .node rect, .dark .mermaid svg .node circle, .dark .mermaid svg .node ellipse, .dark .mermaid svg .node polygon, .dark .mermaid svg .node path {
-            stroke: #64748b !important;
-            fill: #334155 !important;
+            stroke: #64748b !important; 
+            fill: #334155 !important; 
         }
          .dark .mermaid svg .cluster rect {
-            stroke: #64748b !important;
-            fill: #475569 !important;
+            stroke: #64748b !important; 
+            fill: #475569 !important; 
         }
         .dark .mermaid svg .arrowheadPath {
-            fill: #64748b !important;
+            fill: #64748b !important; 
         }
         .dark .mermaid svg .edgePath .path {
-            stroke: #64748b !important;
+            stroke: #64748b !important; 
         }
 
-        h2 {
-            @apply text-3xl font-extrabold text-sky-600 dark:text-sky-400 mt-0 mb-6;
+        h2 { 
+            @apply text-3xl font-extrabold text-sky-600 dark:text-sky-400 mt-0 mb-6; 
         }
-        h3 {
-            @apply text-xl font-bold text-sky-700 dark:text-sky-500 mt-8 mb-4;
+        h3 { 
+            @apply text-xl font-bold text-sky-700 dark:text-sky-500 mt-8 mb-4; 
         }
         /* Estilos para HTML renderizado a partir de Markdown */
         .rendered-markdown-content p {
             @apply mt-4 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed;
         }
         .rendered-markdown-content p:first-child {
-            @apply mt-0;
+            @apply mt-0; 
         }
         .rendered-markdown-content ul, .rendered-markdown-content ol {
-            @apply list-outside ml-5 space-y-3 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed mt-4;
+            @apply list-outside ml-5 space-y-2 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed mt-4; 
         }
         .rendered-markdown-content ul { @apply list-disc; }
         .rendered-markdown-content ol { @apply list-decimal; }
         .rendered-markdown-content ul ul, .rendered-markdown-content ol ol {
-            @apply mt-2 ml-5 space-y-2;
+            @apply mt-1 ml-5 space-y-1; 
         }
         .rendered-markdown-content ul ul { @apply list-circle; }
         .rendered-markdown-content li strong {
             @apply font-semibold text-slate-700 dark:text-slate-200;
         }
-        .rendered-markdown-content h3 {
-             @apply text-xl font-bold text-sky-700 dark:text-sky-500 mt-6 mb-3;
+        .rendered-markdown-content h3 { 
+             @apply text-2xl font-bold text-sky-700 dark:text-sky-500 mt-10 mb-5 border-b border-slate-300 dark:border-slate-700 pb-2;
         }
-        .rendered-markdown-content h4 {
-             @apply text-lg font-semibold text-sky-600 dark:text-sky-400 mt-5 mb-2;
+        .rendered-markdown-content h4 { 
+             @apply text-xl font-semibold text-sky-600 dark:text-sky-400 mt-8 mb-3;
         }
-        .rendered-markdown-content code {
+         .rendered-markdown-content h5 { 
+             @apply text-lg font-semibold text-slate-700 dark:text-slate-300 mt-6 mb-2;
+        }
+        .rendered-markdown-content code { 
             @apply bg-slate-200 dark:bg-slate-700 text-sky-700 dark:text-sky-400 px-1.5 py-0.5 rounded-md text-sm font-mono;
         }
-        /* Estilo para KaTeX (matemática) */
-        .katex-display {
-            @apply my-4 text-lg text-center;
+        .katex-display { 
+            @apply my-4 text-lg text-center; 
         }
-        .katex {
-            @apply text-base md:text-lg;
+        .katex { 
+            @apply text-base md:text-lg; 
         }
-
+        
         table {
-            @apply w-full mt-6 border-collapse shadow-lg rounded-lg overflow-hidden;
+            @apply w-full mt-6 border-collapse shadow-lg rounded-lg overflow-hidden; 
         }
         th, td {
-            @apply border border-slate-200 dark:border-slate-700 p-4;
+            @apply border border-slate-200 dark:border-slate-700 p-4; 
         }
         th {
-            @apply bg-slate-100 dark:bg-slate-800 text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider;
+            @apply bg-slate-100 dark:bg-slate-800 text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider; 
         }
         td {
             @apply text-sm text-slate-600 dark:text-slate-400;
@@ -107,16 +109,16 @@
             @apply bg-slate-50 dark:bg-slate-800/60;
         }
         tbody tr:hover {
-            @apply bg-sky-50 dark:bg-sky-900/40;
+            @apply bg-sky-50 dark:bg-sky-900/40; 
         }
-
+        
         .container-custom {
-            max-width: 1024px;
+            max-width: 1024px; 
             margin-left: auto;
             margin-right: auto;
         }
-        .active-nav-link {
-            @apply bg-sky-500 text-white font-semibold shadow-sm;
+        .active-nav-link { 
+            @apply bg-sky-500 text-white font-semibold shadow-sm; 
         }
         html {
             /* scroll-behavior: smooth; */
@@ -132,17 +134,17 @@
         }
 
         #sidebar {
-            @apply bg-slate-200 dark:bg-slate-800 border-r border-slate-300 dark:border-slate-700 shadow-lg;
+            @apply bg-slate-200 dark:bg-slate-800 border-r border-slate-300 dark:border-slate-700 shadow-lg; 
         }
-        #sidebar h3 {
-            @apply text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0 mb-5 px-4 pt-1;
+        #sidebar h3 { 
+            @apply text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0 mb-5 px-4 pt-1; 
         }
-        #sidebar .nav-link {
-            @apply px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-sky-700 dark:hover:text-sky-400 rounded-md text-sm font-medium transition-colors duration-150 cursor-pointer;
+        #sidebar .nav-link { 
+            @apply px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-sky-700 dark:hover:text-sky-400 rounded-md text-sm font-medium transition-colors duration-150 cursor-pointer; 
         }
-
-        main section {
-            @apply bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 sm:p-10 border-t-4 border-sky-500 dark:border-sky-600;
+        
+        main section { 
+            @apply bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 sm:p-10 border-t-4 border-sky-500 dark:border-sky-600; 
         }
 
     </style>
@@ -163,20 +165,22 @@
         </div>
     </header>
 
-    <aside id="sidebar" class="fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] p-6 z-20 transition-colors duration-300">
+    <aside id="sidebar" class="fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] p-6 z-20 transition-colors duration-300"> 
         <h3>Navegação</h3>
-        <nav class="mt-2">
-            <ul class="space-y-2">
+        <nav class="mt-2"> 
+            <ul class="space-y-2"> 
                 <li><a href="#intro-jssp" aria-label="Ir para a seção Introdução ao JSSP" class="nav-link">Introdução JSSP</a></li>
                 <li><a href="#abordagem-algoritmos" aria-label="Ir para a seção Abordagem e Solvers" class="nav-link">Abordagem e Solvers</a></li>
+                <li><a href="#exemplo-grafo-disjuntivo" aria-label="Ir para a seção Exemplo de Grafo Disjuntivo" class="nav-link">Exemplo Grafo Disjuntivo</a></li>
                 <li><a href="#fluxograma" aria-label="Ir para a seção Fluxograma" class="nav-link">Fluxograma</a></li>
                 <li><a href="#resultados" aria-label="Ir para a seção Resultados" class="nav-link">Resultados</a></li>
                 <li><a href="#conclusao" aria-label="Ir para a seção Conclusão" class="nav-link">Conclusão</a></li>
+                <li><a href="#limitacoes-futuros" aria-label="Ir para a seção Limitações e Trabalhos Futuros" class="nav-link">Limitações e Futuro</a></li>
             </ul>
         </nav>
     </aside>
 
-    <div class="pt-16 pl-0 md:pl-64 min-h-screen flex flex-col">
+    <div class="pt-16 pl-0 md:pl-64 min-h-screen flex flex-col"> 
         <main class="flex-grow container-custom px-4 sm:px-6 py-10">
             <section id="intro-jssp" class="main-section scroll-mt-20 mb-10 p-6 sm:p-10" style="display: none;">
                 <h2>Introdução ao Problema Job-Shop (JSSP)</h2>
@@ -190,61 +194,162 @@ Este documento apresenta uma análise aprofundada dos componentes algorítmicos 
             </section>
 
             <section id="abordagem-algoritmos" class="main-section scroll-mt-20 mb-10 p-6 sm:p-10" style="display: none;">
-                <h2>Abordagem da Solução e Algoritmos de Solver</h2>
+                <h2>Abordagem da Solução e Algoritmos</h2>
                 <div class="markdown-source" style="display:none;">
-A solução implementada (conforme código no diretório `src/`) é estruturada em torno de componentes modulares que encapsulam diferentes aspectos do tratamento do JSSP, com ênfase nos algoritmos de otimização.
+A implementação para resolução do Problema de Escalonamento Job Shop (JSSP) no arquivo `src/main.py` e seus respectivos módulos segue uma abordagem híbrida, combinando métodos exatos e metaheurísticos para buscar soluções de alta qualidade de forma eficiente. O fluxo principal integra:
+
+* Solver Exato (CP-SAT/OR-Tools) para obter uma solução inicial robusta.
+* Algoritmo Genético (GA) para exploração intensiva do espaço de soluções e refinamento heurístico.
+* Busca Local (Variable Neighborhood Descent - VND) para intensificação e polimento final.
+
+### Fluxo Principal da Solução
+O pipeline de solução em `src/main.py` é dividido nas seguintes etapas principais:
+
+1.  **Leitura da Instância**
+    Os dados do problema JSSP são lidos de um arquivo de entrada através da função `read_jobshop_instance` (em `src.common`), que converte as informações em listas de jobs, cada um contendo suas operações, máquinas e durações.
+2.  **Solução Inicial com CP-SAT**
+    Um solver exato (implementado em `ORToolsCPSATSolver`) utiliza o Google OR-Tools para gerar uma solução inicial dentro de um tempo limite (geralmente 10% do tempo total disponível).
+    O resultado é um objeto `Schedule`, com as operações ordenadas e os horários de início atribuídos de modo ótimo ou quase ótimo.
+    O makespan (tempo total de conclusão) dessa solução é calculado e registrado.
+3.  **Otimização Heurística com Algoritmo Genético (GA)**
+    Se houver tempo suficiente, o `GeneticSolver` é instanciado, utilizando a solução do CP-SAT como semente da população.
+    A população inicial é composta por:
+    * A solução do CP-SAT.
+    * Soluções heurísticas como SPT (Shortest Processing Time), LPT (Longest Processing Time) e FIFO.
+    * Permutações e variações aleatórias para garantir diversidade.
+    O GA executa por até 80% do tempo restante, aplicando operadores de crossover, mutação e busca local em cada geração.
+    A seleção é feita via torneio binário e elitismo.
+    O melhor cromossomo gerado é decodificado em um novo `Schedule`.
+    Caso essa solução seja superior à inicial, ela passa a ser a solução corrente.
+4.  **Busca Local Final (VND)**
+    Se ainda houver tempo, o `VNDLocalSearch` é aplicado ao melhor cromossomo encontrado.
+    O VND explora sistematicamente várias vizinhanças (swap, inversion, 2-opt, 3-opt, movimentos de bloco, operadores no caminho crítico, entre outros).
+    A função de fitness utilizada é `_calculate_makespan_static`, garantindo que o objetivo do VND seja sempre a redução do makespan.
+    Se o VND encontrar uma solução melhor, o cromossomo é decodificado e atualizado.
+5.  **Saída dos Resultados**
+    Ao final do processo, a melhor solução encontrada é salva no arquivo de saída via `write_output`, no formato esperado pelo problema.
+
+### Pacotes e Módulos Envolvidos
+
+#### 1. `src.common`
+* Funções para leitura (`read_jobshop_instance`) e escrita de instâncias/soluções (`write_output`).
+* Utilidades para cálculo eficiente de agendamento e makespan (`_calculate_schedule_details_static`, `_calculate_makespan_static`).
+
+#### 2. `src.models`
+* Define a classe `Schedule`, responsável por armazenar operações agendadas, permitir ordenação e cálculo do makespan.
+
+#### 3. `src.solver`
+* Ponto de entrada abstrato, permite instanciar solvers específicos (CP-SAT ou GA).
+* Inclui métodos para validação e obtenção do makespan (`ScheduleValidator`).
+
+#### 4. `src.solvers`
+* Implementa os algoritmos de resolução:
+    * `ortools_cpsat_solver.py`: modelagem CP do JSSP e uso do OR-Tools.
+    * `genetic_solver.py`: núcleo do Algoritmo Genético, detalhado abaixo.
+    * Outros arquivos para experimentação (e.g., `bayesopt`, `PBT`).
+
+#### 5. `src.ga` (Componentes do Algoritmo Genético)
+* **Inicialização da População:** Usa heurísticas e a solução exata como base inicial, complementando com variações aleatórias para maximizar diversidade.
+* **Representação:** Cromossomos são permutações das operações (`job_id`, `op_id`).
+* **Fitness:** Calculado via `_calculate_makespan_static`.
+* **Seleção:** Implementada por torneio binário, mantendo também elitismo.
+* **Operadores Genéticos:**
+    * **Crossover:** `OrderCrossover`, `PMX`, `CycleCrossover`, `PositionBasedCrossover`, `DisjunctiveCrossover` (específico para JSSP).
+    * **Mutação:** `StandardMutation`, `DisjunctiveMutation`, `CriticalPathSwap`.
+    * Os operadores podem ser escolhidos adaptativamente (bandit/roleta) com base no desempenho.
+* **Grafo Disjuntivo:** Representa precedências e restrições de máquina. Permite calcular makespan e identificar caminhos críticos de forma eficiente.
+* **Diversidade:** Monitoramento constante para ajuste dinâmico das taxas de crossover/mutação e reinserção de diversidade se necessário.
+
+#### 6. `src.local_search` (Busca Local/VND)
+* Implementa a estratégia VND e operadores de vizinhança (swap, block move, critical path, LNS).
+* Permite o uso de orquestradores adaptativos (UCB1, Gradient Bandit) para seleção dos operadores mais eficazes.
+* Usa utilitários para cálculo de makespan e caminho crítico.
+
+#### 7. `src.validators`
+* Garante a factibilidade das soluções (sem sobreposição de máquina, respeito à ordem dos jobs, etc.).
+
+### Detalhamento do Algoritmo Genético (`GeneticSolver`)
+* **Inicialização:** População gerada a partir da solução exata, heurísticas e variações.
+* **Geração:** Cada indivíduo é avaliado em paralelo. Diversidade monitorada.
+* **Seleção:** Pais escolhidos por torneio, elitismo mantém os melhores.
+* **Cruzamento e Mutação:** Operadores escolhidos de acordo com histórico de desempenho. Busca local pode ser aplicada aos filhos.
+* **Atualização:** Melhor solução global é mantida e a população é atualizada a cada geração.
+* **Convergência:** Critérios de parada envolvem tempo, ausência de melhora ou convergência populacional.
+
+### Conclusão da Abordagem
+Essa arquitetura híbrida explora o melhor dos dois mundos:
+* Robustez do solver exato para soluções iniciais confiáveis.
+* Potência do Algoritmo Genético e da Busca Local para exploração e intensificação do espaço de soluções.
+O resultado é um pipeline flexível e eficiente para atacar instâncias desafiadoras do JSSP dentro de restrições de tempo e qualidade.
                 </div>
                 <div class="rendered-markdown-content mt-4"></div>
+                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
+            </section>
 
-                <h3 id="solver-cp-sat">Geração da Solução Inicial (CP-SAT)</h3>
+            <section id="exemplo-grafo-disjuntivo" class="main-section scroll-mt-20 mb-10 p-6 sm:p-10" style="display: none;">
+                <h2>Exemplo de Grafo Disjuntivo no JSSP</h2>
                 <div class="markdown-source" style="display:none;">
-Para acelerar a convergência e fornecer um ponto de partida de alta qualidade, a solução integra um solver baseado em Programação por Restrições (CP-SAT), utilizando a biblioteca OR-Tools. Uma porção configurável do tempo total de resolução pode ser alocada para que o solver CP-SAT tente encontrar uma solução ótima ou de boa qualidade. O cronograma resultante desta fase é então utilizado como semente para a população inicial do Algoritmo Genético, podendo ser complementado por heurísticas construtivas simples para diversificação.
-                </div>
-                <div class="rendered-markdown-content mt-3"></div>
+Para ilustrar como o Grafo Disjuntivo representa uma solução no Job-Shop Scheduling Problem (JSSP), considere um pequeno exemplo com 2 jobs (J1, J2) e 2 máquinas (M1, M2).
 
-                <h3 id="solver-ga">Otimização por Algoritmo Genético (GA)</h3>
+**Definição do Problema:**
+
+* **J1:** Operação 1 (J1,O1) em M1 (duração 3), Operação 2 (J1,O2) em M2 (duração 2)
+* **J2:** Operação 1 (J2,O1) em M2 (duração 4), Operação 2 (J2,O2) em M1 (duração 1)
+
+As restrições de precedência são: (J1,O1) $\rightarrow$ (J1,O2) e (J2,O1) $\rightarrow$ (J2,O2).
+
+**Solução Candidata (Ordem das Operações nas Máquinas):**
+
+Suponha que uma solução candidata define a seguinte ordem:
+
+* **M1:** (J1,O1) antes de (J2,O2)
+* **M2:** (J2,O1) antes de (J1,O2)
+
+**Representação em Grafo Disjuntivo:**
+
+O grafo teria:
+
+* **Nós:** Source, Sink, (J1,O1), (J1,O2), (J2,O1), (J2,O2).
+* **Arcos Conjuntivos:** Source $\rightarrow$ (J1,O1) [peso 0], (J1,O1) $\rightarrow$ (J1,O2) [peso 3], Source $\rightarrow$ (J2,O1) [peso 0], (J2,O1) $\rightarrow$ (J2,O2) [peso 4], (J1,O2) $\rightarrow$ Sink [peso 2], (J2,O2) $\rightarrow$ Sink [peso 1].
+* **Arcos Disjuntivos Selecionados:** Para M1: (J1,O1) $\rightarrow$ (J2,O2) [peso 3]. Para M2: (J2,O1) $\rightarrow$ (J1,O2) [peso 4].
+
+Abaixo segue o diagrama Mermaid para esta solução:
+                </div>
+                <div class="rendered-markdown-content mt-4"></div>
+                
+                <div class="mermaid">
+flowchart TD
+    Source["Source"] --> J1O1["J1,O1 (M1, d=3)"];
+    J1O1 -- "Conjuntivo J1 (peso 3)" --> J1O2["J1,O2 (M2, d=2)"];
+    J1O2 -- "Conjuntivo (peso 2)" --> Sink["Sink"];
+
+    Source --> J2O1["J2,O1 (M2, d=4)"];
+    J2O1 -- "Conjuntivo J2 (peso 4)" --> J2O2["J2,O2 (M1, d=1)"];
+    J2O2 -- "Conjuntivo (peso 1)" --> Sink;
+
+    subgraph "Máquina M1"
+        J1O1 -.->|"Disjuntivo M1 (peso 3)"| J2O2;
+    end
+
+    subgraph "Máquina M2"
+        J2O1 -.->|"Disjuntivo M2 (peso 4)"| J1O2;
+    end
+
+    classDef job1 fill:#BDE0FE,stroke:#A2D2FF,stroke-width:2px;
+    classDef job2 fill:#FFC8DD,stroke:#FFAFCC,stroke-width:2px;
+    class J1O1,J1O2 job1;
+    class J2O1,J2O2 job2;
+    class Source,Sink fill:#CDB4DB,stroke:#CDB4DB,stroke-width:2px;
+                </div>
+
                 <div class="markdown-source" style="display:none;">
-O componente central da busca heurística é um Algoritmo Genético (GA) projetado para explorar eficientemente o espaço de soluções do JSSP, com o objetivo primário de minimizar o makespan.
+**Cálculo do Makespan:**
 
-* **Codificação da Solução (Cromossomo):** Cada gene é uma tupla `(job_id, op_id)`, identificando unicamente uma operação. O cromossomo é uma lista dessas tuplas, contendo todas as operações numa ordem específica que respeita as precedências internas de cada job.
-* **Inicialização da População:** Gerada usando soluções do CP-SAT, heurísticas (SPT, LPT, FIFO) ou variações aleatórias, garantindo que cada cromossomo seja uma permutação completa.
-* **Decodificação e Avaliação da Qualidade (Fitness):** A função `_calculate_schedule_details_static` processa o cromossomo, agenda operações o mais cedo possível e calcula o makespan (menor é melhor) através do caminho crítico no grafo disjuntivo.
-* **Mecanismo de Seleção de Pais:** Predominantemente **seleção por torneio binário**, com estratégia de **elitismo**.
-* **Operadores Genéticos (Cruzamento e Mutação):**
-    * **Cruzamento:** Variantes de operadores de permutação (PMX, Order Crossover, etc.) e o **DisjunctiveCrossover** (específico para JSSP).
-    * **Mutação:** Trocas simples (StandardMutation), **DisjunctiveMutation** (nível de máquina) e **CriticalPathSwap** (foco no caminho crítico).
-    * Soluções resultantes podem passar por busca local (algoritmos meméticos).
-* **Integração da Busca Local no Fluxo do GA:** Aplicada a novos indivíduos ou como intensificação final da melhor solução do GA.
-    1.  Como parte de um algoritmo memético.
-    2.  Como uma fase de intensificação final.
-* **Gestão da População:** Formada por descendentes e indivíduos preservados pelo elitismo.
+O makespan desta solução é o comprimento do caminho mais longo do nó "Source" ao nó "Sink". Neste exemplo, o makespan é **6** (caminho crítico: Source $\rightarrow$ J2O1 $\rightarrow$ J1O2 $\rightarrow$ Sink).
 
-Em suma, codificamos o problema de Job-Shop como uma simples permutação de genes `(job, etapa)`. A validação de precedência e cálculo de makespan ficam a cargo do decodificador estático, e todos os operadores genéticos trabalham sobre essa representação de permutação.
+Este exemplo demonstra como a ordem das operações (do cromossomo) define os arcos disjuntivos, permitindo calcular o makespan.
                 </div>
-                <div class="rendered-markdown-content mt-3"></div>
-
-                <h3 id="solver-ucb1">Seleção Adaptativa de Operadores Genéticos (UCB1)</h3>
-                <div class="markdown-source" style="display:none;">
-Para otimizar a aplicação dos diversos operadores genéticos, um mecanismo de seleção adaptativa baseado no algoritmo UCB1 ajusta dinamicamente a probabilidade de escolha dos operadores com base no seu desempenho histórico. A fórmula do score para um operador $i$ é:
-
-$$\text{score}_i = \bar{R}_i + c \sqrt{\frac{\ln N}{n_i}}$$
-
-Onde $\bar{R}_i$ é a recompensa média do operador, $N$ é o número total de vezes que qualquer operador foi selecionado, $n_i$ é o número de vezes que o operador $i$ foi selecionado, e $c$ é uma constante que controla o nível de exploração.
-                </div>
-                <div class="rendered-markdown-content mt-3"></div>
-                <h3 id="solver-grafos">Representação e Manipulação baseada em Grafos</h3>
-                <div class="markdown-source" style="display:none;">
-* Implementação do **Grafo Disjuntivo** do JSSP: Usado para modelar restrições, detetar ciclos (inviabilidades), obter ordenação topológica e calcular o makespan (caminho crítico) a partir de um cromossomo.
-* Utilização da estrutura Union-Find (DSU): Para deteção eficiente de ciclos durante a construção ou modificação de soluções.
-                </div>
-                <div class="rendered-markdown-content mt-3"></div>
-
-
-                <h3 id="solver-vnd">Refinamento por Busca Local (Estratégias de Vizinhança - VND)</h3>
-                <div class="markdown-source" style="display:none;">
-A Variable Neighborhood Descent (VND) é empregada para intensificar a busca, explorando sistematicamente múltiplas estruturas de vizinhança (Swap, Inversion, Scramble, 2-opt, BlockMove, etc.), potencialmente com ordenação adaptativa via UCB1.
-                </div>
-                <div class="rendered-markdown-content mt-3"></div>
+                <div class="rendered-markdown-content mt-4"></div>
                 <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
             </section>
 
@@ -262,11 +367,11 @@ flowchart TD
     C --> E["População Inicial GA"];
     D --> E;
     E --> F["Algoritmo Genético"];
-    F -- "Seleção Adaptativa (UCB1)" --> F;
-    F --> G{"Aplicar Busca Local?"};
+    F -- "Loop de Gerações (UCB1, etc.)" --> F;
+    F --> G{"Aplicar Busca Local (VND) nesta geração?"};
     G -- "Sim" --> H["Busca Local (VND)"];
-    G -- "Não" --> I["Solução Refinada"];
-    H --> I;
+    H -- "Refinar População/Indivíduos" --> F; 
+    G -- "Não (ou GA Terminou)" --> I["Melhor Solução Encontrada"];
     I --> J["Solução Final e Validação"];
                 </div>
                 <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
@@ -278,7 +383,7 @@ flowchart TD
 A abordagem proposta foi avaliada em diversas instâncias benchmark do Job-Shop Scheduling Problem, amplamente utilizadas na literatura. A tabela a seguir apresenta o makespan final alcançado e o tempo total de execução para cada instância:
                 </div>
                 <div class="rendered-markdown-content mt-4"></div>
-
+                
                 <div id="markdown-table-source" style="display: none;">
 | Instância | Melhor Makespan Final | Tempo Total de Execução&nbsp; |
 |:----------|----------------------:|--------------------------:|
@@ -323,6 +428,21 @@ Esta combinação de técnicas visa um equilíbrio eficaz entre exploração glo
                 <div class="rendered-markdown-content mt-4"></div>
                 <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
             </section>
+
+            <section id="limitacoes-futuros" class="main-section scroll-mt-20 mb-10 p-6 sm:p-10" style="display: none;">
+                <h2>Discussão de Limitações e Trabalhos Futuros</h2>
+                <div class="markdown-source" style="display:none;">
+Apesar dos resultados promissores, a solução atual possui limitações. A complexidade inerente ao JSSP significa que, para instâncias muito grandes, o tempo de execução ainda pode ser um fator considerável, mesmo com as otimizações implementadas. A dependência da qualidade da solução inicial do CP-SAT também pode ser um ponto de atenção se o tempo alocado para ele for muito restrito.
+
+Para trabalhos futuros, uma direção promissora é a exploração de técnicas de Aprendizagem por Reforço Profundo (DRL). O DRL poderia ser investigado de duas formas principais:
+1.  **Como um método complementar a uma heurística existente:** Por exemplo, um agente DRL poderia aprender políticas para tomar decisões em pontos chave da construção de um cronograma ou para guiar a busca local de forma mais inteligente.
+2.  **Como um método auxiliar para o Algoritmo Genético:** O DRL poderia ser usado para otimizar a seleção de operadores genéticos, ajustar dinamicamente os parâmetros do GA, ou até mesmo para gerar indivíduos iniciais mais promissores ou para guiar o processo de mutação e cruzamento de forma mais eficaz, adaptando-se às características da instância específica que está a ser resolvida pela GA.
+
+Outras melhorias poderiam incluir a paralelização mais granular de certas etapas do Algoritmo Genético e da Busca Local, e a investigação de representações alternativas do cromossomo que possam ser mais adequadas para certos operadores genéticos.
+                </div>
+                <div class="rendered-markdown-content mt-4"></div>
+                <a href="#page-header" class="back-to-top" aria-label="Voltar ao topo da página">Voltar ao Topo &uarr;</a>
+            </section>
         </main>
 
         <footer class="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 py-12 text-center transition-colors duration-300">
@@ -340,7 +460,7 @@ Esta combinação de técnicas visa um equilíbrio eficaz entre exploração glo
         const sunIcon = document.getElementById('sunIcon');
         const moonIcon = document.getElementById('moonIcon');
         const htmlElement = document.documentElement;
-
+        
         const navLinks = document.querySelectorAll('#sidebar nav a.nav-link');
         const mainSections = document.querySelectorAll('main section.main-section');
         const activeLinkClass = 'active-nav-link';
@@ -350,12 +470,12 @@ Esta combinação de técnicas visa um equilíbrio eficaz entre exploração glo
                 const originalGraphDefinition = element.getAttribute('data-original-definition');
                 if (originalGraphDefinition) {
                     element.removeAttribute('data-processed');
-                    element.innerHTML = '';
+                    element.innerHTML = ''; 
 
                     const themeDirective = `%%{init: {'theme': '${isDarkTheme ? 'dark' : 'neutral'}'}}%%\n`;
                     const definitionTextNode = document.createTextNode(themeDirective + originalGraphDefinition);
                     element.appendChild(definitionTextNode);
-
+                    
                     requestAnimationFrame(() => {
                         try {
                             mermaid.run({ nodes: [element] });
@@ -366,19 +486,48 @@ Esta combinação de técnicas visa um equilíbrio eficaz entre exploração glo
                 }
             }
         }
-
+        
         function renderAllMarkdownContent() {
             if (typeof marked !== 'undefined') {
                 document.querySelectorAll('.markdown-source').forEach(sourceEl => {
-                    const markdownText = sourceEl.textContent; // Get raw text, including newlines
-                    const targetEl = sourceEl.nextElementSibling;
+                    const markdownText = sourceEl.textContent; 
+                    const targetEl = sourceEl.nextElementSibling; 
                     if (targetEl && targetEl.classList.contains('rendered-markdown-content')) {
                         targetEl.innerHTML = marked.parse(markdownText);
                     }
                 });
-                // Call KaTeX rendering after Markdown is parsed and inserted
-                if (typeof renderMathInElement === 'function') {
-                     // Ensure KaTeX's renderMathInElement is available
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Armazena definições originais do Mermaid
+            document.querySelectorAll('.mermaid').forEach(el => {
+                const rawDefinition = Array.from(el.childNodes)
+                                        .filter(node => node.nodeType === Node.TEXT_NODE)
+                                        .map(node => node.nodeValue)
+                                        .join('\n')
+                                        .trim();
+                if (rawDefinition) {
+                    el.setAttribute('data-original-definition', rawDefinition);
+                }
+                el.innerHTML = ''; 
+            });
+
+            // Inicializa Mermaid
+            if (typeof mermaid !== 'undefined') {
+                try {
+                    mermaid.initialize({ startOnLoad: false }); 
+                } catch (e) {
+                    console.error("Erro ao inicializar Mermaid:", e);
+                }
+            }
+            
+            // Renderiza todo o conteúdo Markdown para HTML
+            renderAllMarkdownContent(); 
+
+            // Renderiza KaTeX em todo o corpo após o Markdown
+            if (typeof renderMathInElement === 'function') {
+                try {
                     renderMathInElement(document.body, {
                         delimiters: [
                             {left: '$$', right: '$$', display: true},
@@ -386,12 +535,36 @@ Esta combinação de técnicas visa um equilíbrio eficaz entre exploração glo
                             {left: '\\(', right: '\\)', display: false},
                             {left: '\\[', right: '\\]', display: true}
                         ],
-                        throwOnError: false
+                        throwOnError: false 
                     });
+                } catch (e) {
+                    console.error("Erro ao renderizar KaTeX na carga inicial:", e);
                 }
             }
-        }
 
+
+            // Aplica tema inicial
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            let initialIsDark = prefersDark;
+            if (savedTheme) {
+                initialIsDark = (savedTheme === 'dark');
+            }
+            
+            if (initialIsDark) {
+                htmlElement.classList.add('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                htmlElement.classList.remove('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+            
+            handleHashChange(); 
+            applyTheme(initialIsDark); 
+
+        });
 
         function showSection(targetId) {
             let sectionToShow = null;
@@ -407,8 +580,16 @@ Esta combinação de técnicas visa um equilíbrio eficaz entre exploração glo
             navLinks.forEach(link => {
                 link.classList.toggle(activeLinkClass, link.hash === `#${targetId}`);
             });
-
+            
             if (sectionToShow) {
+                const markdownSource = sectionToShow.querySelector('.markdown-source');
+                const renderedContent = sectionToShow.querySelector('.rendered-markdown-content');
+
+                if (markdownSource && renderedContent && !renderedContent.hasChildNodes() && typeof marked !== 'undefined') {
+                     renderedContent.innerHTML = marked.parse(markdownSource.textContent);
+                }
+
+
                 const mermaidElement = sectionToShow.querySelector('.mermaid');
                 if (mermaidElement) {
                     renderMermaidInElement(mermaidElement, htmlElement.classList.contains('dark'));
@@ -416,23 +597,37 @@ Esta combinação de técnicas visa um equilíbrio eficaz entre exploração glo
                 if (targetId === 'resultados') {
                     renderMarkdownTable();
                 }
+                // Re-renderiza KaTeX para a secção que se tornou visível
+                if (typeof renderMathInElement === 'function') {
+                     try {
+                        renderMathInElement(sectionToShow, {
+                            delimiters: [
+                                {left: '$$', right: '$$', display: true},
+                                {left: '$', right: '$', display: false}
+                            ],
+                            throwOnError: false
+                        });
+                    } catch (e) {
+                        console.error("Erro ao renderizar KaTeX em showSection:", e);
+                    }
+                }
             }
         }
 
         navLinks.forEach(link => {
             link.addEventListener('click', (event) => {
-                event.preventDefault();
+                event.preventDefault(); 
                 const targetId = link.hash.substring(1);
-                document.getElementById('page-header').scrollIntoView({behavior: 'auto'});
+                document.getElementById('page-header').scrollIntoView({behavior: 'auto'}); 
                 showSection(targetId);
                 history.pushState(null, null, `#${targetId}`);
             });
         });
-
+        
         function handleHashChange() {
             let targetId = window.location.hash.substring(1);
             if (!targetId && mainSections.length > 0) {
-                targetId = mainSections[0].id;
+                targetId = mainSections[0].id; 
                 if (history.replaceState) {
                     history.replaceState(null, null, `#${targetId}`);
                 }
@@ -482,22 +677,22 @@ Esta combinação de técnicas visa um equilíbrio eficaz entre exploração glo
                 const tableElement = renderedTableContainerEl.querySelector('table');
                 if (tableElement) {
                     tableElement.classList.add('w-full', 'border-collapse', 'shadow-lg', 'rounded-lg', 'overflow-hidden');
-
+                    
                     tableElement.querySelectorAll('thead th').forEach((th, index) => {
                         th.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-sm', 'font-bold', 'text-slate-600', 'dark:text-slate-300', 'uppercase', 'tracking-wider', 'p-4', 'border', 'border-slate-200', 'dark:border-slate-700');
-                        if (index === 0) th.classList.add('text-center');
-                        else th.classList.add('text-right');
+                        if (index === 0) th.classList.add('text-center'); 
+                        else th.classList.add('text-right'); 
                     });
 
-                    tableElement.querySelectorAll('tbody td').forEach((td) => {
+                    tableElement.querySelectorAll('tbody td').forEach((td) => { 
                         td.classList.add('text-sm', 'text-slate-600', 'dark:text-slate-400', 'p-4', 'border', 'border-slate-200', 'dark:border-slate-700');
                         const colIndex = td.cellIndex;
-                         if (colIndex === 0) td.classList.add('text-center');
-                         else td.classList.add('text-right');
+                         if (colIndex === 0) td.classList.add('text-center'); 
+                         else td.classList.add('text-right'); 
                     });
 
                     tableElement.querySelectorAll('tbody tr').forEach((tr, index) => {
-                        if (index % 2 !== 0) {
+                        if (index % 2 !== 0) { 
                              tr.classList.add('bg-slate-50', 'dark:bg-slate-800/60');
                         }
                         tr.addEventListener('mouseover', () => tr.classList.add('bg-sky-50', 'dark:bg-sky-900/40'));
@@ -506,53 +701,6 @@ Esta combinação de técnicas visa um equilíbrio eficaz entre exploração glo
                 }
             }
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.mermaid').forEach(el => {
-                const rawDefinition = Array.from(el.childNodes)
-                                        .filter(node => node.nodeType === Node.TEXT_NODE)
-                                        .map(node => node.nodeValue)
-                                        .join('\n')
-                                        .trim();
-                if (rawDefinition) {
-                    el.setAttribute('data-original-definition', rawDefinition);
-                }
-                el.innerHTML = '';
-            });
-
-            if (typeof mermaid !== 'undefined') {
-                try {
-                    mermaid.initialize({ startOnLoad: false });
-                } catch (e) {
-                    console.error("Erro ao inicializar Mermaid:", e);
-                }
-            }
-
-            renderAllMarkdownContent();
-
-            const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            let initialIsDark = prefersDark;
-            if (savedTheme) {
-                initialIsDark = (savedTheme === 'dark');
-            }
-
-            if (initialIsDark) {
-                htmlElement.classList.add('dark');
-                sunIcon.classList.add('hidden');
-                moonIcon.classList.remove('hidden');
-            } else {
-                htmlElement.classList.remove('dark');
-                sunIcon.classList.remove('hidden');
-                moonIcon.classList.add('hidden');
-            }
-            applyTheme(initialIsDark);
-            handleHashChange();
-        });
-
-        darkModeToggle.addEventListener('click', () => {
-            applyTheme(!htmlElement.classList.contains('dark'));
-        });
     </script>
 
 </body>
