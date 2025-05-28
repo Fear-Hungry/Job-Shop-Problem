@@ -49,9 +49,6 @@
         h2 { 
             @apply text-3xl font-extrabold text-sky-600 dark:text-sky-400 mt-0 mb-6; 
         }
-        h3 { 
-            @apply text-xl font-bold text-sky-700 dark:text-sky-500 mt-8 mb-4; 
-        }
         /* Estilos para HTML renderizado a partir de Markdown */
         .rendered-markdown-content p {
             @apply mt-4 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed;
@@ -72,13 +69,13 @@
             @apply font-semibold text-slate-700 dark:text-slate-200;
         }
         .rendered-markdown-content h3 { 
-             @apply text-2xl font-bold text-sky-700 dark:text-sky-500 mt-10 mb-5 border-b border-slate-300 dark:border-slate-700 pb-2;
+             @apply text-2xl font-bold text-sky-700 dark:text-sky-500 mt-10 mb-2 border-b border-slate-300 dark:border-slate-700 pb-2 cursor-pointer flex justify-between items-center;
         }
         .rendered-markdown-content h4 { 
-             @apply text-xl font-semibold text-sky-600 dark:text-sky-400 mt-8 mb-3;
+             @apply text-xl font-semibold text-sky-600 dark:text-sky-400 mt-8 mb-2 cursor-pointer flex justify-between items-center;
         }
          .rendered-markdown-content h5 { 
-             @apply text-lg font-semibold text-slate-700 dark:text-slate-300 mt-6 mb-2;
+             @apply text-lg font-semibold text-slate-700 dark:text-slate-300 mt-6 mb-2 cursor-pointer flex justify-between items-center;
         }
         .rendered-markdown-content code { 
             @apply bg-slate-200 dark:bg-slate-700 text-sky-700 dark:text-sky-400 px-1.5 py-0.5 rounded-md text-sm font-mono;
@@ -145,6 +142,21 @@
         
         main section { 
             @apply bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 sm:p-10 border-t-4 border-sky-500 dark:border-sky-600; 
+        }
+        .collapsible-content-area {
+            @apply mt-4 pl-4 border-l-2 border-slate-200 dark:border-slate-700;
+            max-height: 0; /* Start collapsed */
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .collapsible-content-area.expanded {
+             max-height: 2000px; /* Adjust if content is very long */
+        }
+        .toggle-icon-jssp { 
+            @apply ml-2 text-sky-500 dark:text-sky-400 font-bold text-xl cursor-pointer select-none transition-transform duration-300;
+        }
+        .toggle-icon-jssp.expanded {
+            transform: rotate(45deg);
         }
 
     </style>
@@ -447,7 +459,7 @@ Outras melhorias poderiam incluir a paralelização mais granular de certas etap
 
         <footer class="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 py-12 text-center transition-colors duration-300">
             <div class="container-custom px-6">
-                <p class="text-sm">&copy; <span id="currentYear"></span> Seu Nome/Nome do Projeto. Todos os direitos reservados.</p>
+                <p class="text-sm">&copy; <span id="currentYear"></span> Marcus Vinicius / Job Shop Problem.</p>
                 <p class="mt-2 text-xs">Página de demonstração do trabalho sobre JSSP.</p>
             </div>
         </footer>
@@ -563,8 +575,71 @@ Outras melhorias poderiam incluir a paralelização mais granular de certas etap
             
             handleHashChange(); 
             applyTheme(initialIsDark); 
+            setupCollapsibleTitles(); 
 
         });
+
+        function setupCollapsibleTitles() {
+            document.querySelectorAll('main section.main-section .rendered-markdown-content').forEach(container => {
+                const titles = container.querySelectorAll('h3, h4, h5'); 
+
+                titles.forEach(titleEl => {
+                    if (titleEl.querySelector('.toggle-icon-jssp')) {
+                        return; 
+                    }
+
+                    let icon = document.createElement('span');
+                    icon.classList.add('toggle-icon-jssp', 'ml-2', 'text-sky-500', 'dark:text-sky-400', 'font-bold', 'text-xl', 'cursor-pointer', 'select-none');
+                    icon.textContent = '+'; 
+                    titleEl.appendChild(icon);
+                    titleEl.classList.add('cursor-pointer');
+                    
+                    let contentWrapper = document.createElement('div');
+                    contentWrapper.classList.add('collapsible-content-area', 'mt-2', 'pl-4', 'border-l-2', 'border-slate-200', 'dark:border-slate-700');
+                    contentWrapper.style.maxHeight = '0px';
+
+
+                    let nextSibling = titleEl.nextElementSibling;
+                    let elementsToMove = [];
+                    while (nextSibling && !['H3', 'H4', 'H5'].includes(nextSibling.tagName)) {
+                        elementsToMove.push(nextSibling);
+                        nextSibling = nextSibling.nextElementSibling;
+                    }
+                    
+                    elementsToMove.forEach(el => contentWrapper.appendChild(el));
+                    titleEl.parentNode.insertBefore(contentWrapper, titleEl.nextSibling);
+                    
+                    titleEl.addEventListener('click', () => {
+                        const isHidden = contentWrapper.style.maxHeight === '0px';
+                        if (isHidden) {
+                            contentWrapper.style.maxHeight = contentWrapper.scrollHeight + "px";
+                            contentWrapper.classList.add('expanded');
+                            icon.textContent = '−'; 
+                            icon.classList.add('expanded');
+                             if (typeof renderMathInElement === 'function') {
+                                try {
+                                    renderMathInElement(contentWrapper, {
+                                        delimiters: [
+                                            {left: '$$', right: '$$', display: true},
+                                            {left: '$', right: '$', display: false}
+                                        ],
+                                        throwOnError: false
+                                    });
+                                } catch (e) {
+                                    console.error("Erro ao renderizar KaTeX em showSection (collapsible):", e);
+                                }
+                            }
+                        } else {
+                            contentWrapper.style.maxHeight = '0px';
+                            contentWrapper.classList.remove('expanded');
+                            icon.textContent = '+';
+                            icon.classList.remove('expanded');
+                        }
+                    });
+                });
+            });
+        }
+
 
         function showSection(targetId) {
             let sectionToShow = null;
@@ -587,6 +662,7 @@ Outras melhorias poderiam incluir a paralelização mais granular de certas etap
 
                 if (markdownSource && renderedContent && !renderedContent.hasChildNodes() && typeof marked !== 'undefined') {
                      renderedContent.innerHTML = marked.parse(markdownSource.textContent);
+                     setupCollapsibleTitles(); 
                 }
 
 
@@ -597,7 +673,6 @@ Outras melhorias poderiam incluir a paralelização mais granular de certas etap
                 if (targetId === 'resultados') {
                     renderMarkdownTable();
                 }
-                // Re-renderiza KaTeX para a secção que se tornou visível
                 if (typeof renderMathInElement === 'function') {
                      try {
                         renderMathInElement(sectionToShow, {
