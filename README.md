@@ -1,5 +1,10 @@
 # Análise Detalhada da Estrutura e Algoritmos da Solução para o Job-Shop Problem
 
+## Autores
+
+- [Marcus Vinicius](https://github.com/Marcux777)
+- [Eduardo Augusto Moreira](https://github.com/EduardoAM31)
+
 Este documento apresenta uma análise aprofundada dos componentes algorítmicos e da arquitetura da solução desenvolvida para o Problema de Escalonamento Job Shop (JSSP). O objetivo é fornecer uma compreensão clara do funcionamento interno e das técnicas empregadas.
 
 ## Arquitetura da Solução e Componentes Chave
